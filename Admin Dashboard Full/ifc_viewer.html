@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IFC Viewer (High Performance)</title>
+    <title>IFC Viewer (High Quality)</title>
     <link rel="icon" href="cpf-logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
     <style>
-        body { margin: 0; overflow: hidden; background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%); }
+        /* ปรับพื้นหลังให้ดู Clean แบบ Autodesk (ไล่สีเทาจางๆ) */
+        body { margin: 0; overflow: hidden; background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%); }
         #canvas-container { position: relative; width: 100vw; height: 100vh; }
 
         #loading {
@@ -70,7 +71,7 @@
     <div id="loading">
         <div class="spinner-custom"></div>
         <div style="text-align: center;">
-            <p id="status" style="font-weight:600; color:#334155;">Optimizing & Loading...</p>
+            <p id="status" style="font-weight:600; color:#334155;">Rendering High Quality Model...</p>
             <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
             <p id="percent-text" style="color:#64748b; font-size:0.85rem; margin-top:5px;">0%</p>
         </div>
@@ -81,7 +82,7 @@
 
         <div id="info-panel">
             <h2 id="project-name" style="margin:0; color:#1e293b; font-size:1rem; font-weight:700;">Construction Model</h2>
-            <p style="margin:2px 0 0; color:#64748b; font-size:0.8rem;"><i class="fas fa-bolt"></i> Fast Viewer</p>
+            <p style="margin:2px 0 0; color:#059669; font-size:0.8rem;"><i class="fas fa-star"></i> High Quality Mode</p>
         </div>
         
         <div id="controls-panel">
@@ -149,46 +150,55 @@
         const modelUrl = urlParams.get('modelUrl');
         if(urlParams.get('projectName')) document.getElementById('project-name').textContent = urlParams.get('projectName');
 
-        const CORS_PROXIES = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
-
         function init() {
             scene = new THREE.Scene();
+            // ปรับสีพื้นหลัง Scene ให้กลืนกับ HTML
+            scene.background = new THREE.Color(0xf8f9fa); 
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
             
-            // ⚡️ PERFORMANCE OPTIMIZATION 1: Renderer Settings
+            // 🌟 1. QUALITY SETTING: เปิด Antialias และ High Precision
             renderer = new THREE.WebGLRenderer({ 
                 canvas, 
-                antialias: true, // Keep edges sharp
+                antialias: true, 
                 alpha: true, 
-                logarithmicDepthBuffer: true, // Prevent z-fighting
-                powerPreference: "high-performance" // Request GPU
+                logarithmicDepthBuffer: true,
+                powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
             
-            // ⚡️ PERFORMANCE OPTIMIZATION 2: Cap Pixel Ratio
-            // Limit to 1.5 to prevent 4K rendering lag on high-DPI screens
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
+            // 🌟 2. SHARPNESS: ปรับ Pixel Ratio ให้คมกริบตามหน้าจอ
+            renderer.setPixelRatio(window.devicePixelRatio); 
             
             renderer.localClippingEnabled = false;
-            renderer.shadowMap.enabled = false; // No shadows for max speed
+            renderer.shadowMap.enabled = true; // เปิด Shadow Map (ถ้าไหว)
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // เงานุ่ม
 
-            // Lights (Simplified)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); 
-            scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-            dirLight.position.set(100, 100, 50);
+            // 🌟 3. LIGHTING: จัดแสงใหม่ให้ดู Professional (สไตล์ Autodesk)
+            // แสงธรรมชาติ (Hemisphere) - ฟ้าสีขาว พื้นสีเทา
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); 
+            hemiLight.position.set(0, 200, 0);
+            scene.add(hemiLight);
+
+            // แสงหลัก (Directional) - ส่องให้เกิดมิติ
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(100, 200, 100);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048; // เงาละเอียด
+            dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
-            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4); 
-            dirLight2.position.set(-100, 50, -50);
+
+            // แสงเสริม (Fill Light) - ลบเงาดำด้านหลัง
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3); 
+            dirLight2.position.set(-100, 100, -100);
             scene.add(dirLight2);
 
-            const grid = new THREE.GridHelper(500, 100, 0x94a3b8, 0xe2e8f0);
+            const grid = new THREE.GridHelper(500, 100, 0xccd5ae, 0xe9ecef);
             scene.add(grid);
 
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.2;
+            controls.dampingFactor = 0.15; // หน่วงเมาส์ให้นุ่มขึ้น
             controls.screenSpacePanning = true;
 
             clippingPlanes = [
@@ -207,18 +217,22 @@
             if (!modelUrl) return;
             
             ifcLoader = new IFCLoader();
-            ifcLoader.ifcManager.setWasmPath('https://unpkg.com/web-ifc@0.0.46/');
+            
+            // ใช้ CDN + ปิด Worker ตามสูตรแก้ Error ของเรา
+            await ifcLoader.ifcManager.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.46/');
+            // await ifcLoader.ifcManager.useWebWorkers(true, ...); // ปิดไว้ก่อน
+
+            if (ifcLoader.ifcManager.parser && ifcLoader.ifcManager.parser.settings) {
+                ifcLoader.ifcManager.parser.settings.COORDINATE_TO_ORIGIN = true;
+                ifcLoader.ifcManager.parser.settings.USE_FAST_BOOLS = true;
+            }
 
             attemptLoad(modelUrl, 0);
         }
 
         async function attemptLoad(url, proxyIndex) {
-            let finalUrl = url;
-            if (proxyIndex > 0 && proxyIndex <= CORS_PROXIES.length) {
-                finalUrl = CORS_PROXIES[proxyIndex - 1] + encodeURIComponent(url);
-                statusText.textContent = `Proxy attempt ${proxyIndex}...`;
-            }
-
+            let finalUrl = url; 
+            
             ifcLoader.load(
                 finalUrl,
                 (ifcModel) => {
@@ -227,25 +241,30 @@
 
                     ifcModel.traverse(child => {
                         if (child.isMesh) {
+                            // วัสดุหลัก
                             if (child.material) {
                                 const mats = Array.isArray(child.material) ? child.material : [child.material];
                                 mats.forEach(m => {
-                                    m.side = THREE.DoubleSide;
+                                    m.side = THREE.FrontSide; // ประหยัดแรงเครื่อง
                                     m.clippingPlanes = clippingPlanes;
-                                    m.clipShadows = false;
+                                    // ปรับวัสดุให้ดูด้านๆ แบบปูน (Matte) จะดูสมจริงกว่าเงาแว้บ
+                                    m.roughness = 0.8;
+                                    m.metalness = 0.1;
                                 });
                             }
 
-                            // ⚡️ PERFORMANCE OPTIMIZATION 3: Smart Edges
-                            // Only add edges if geometry is large enough to be "structural"
-                            // Skip small bolts/screws to save huge performance
-                            if (child.geometry.boundingSphere) {
-                                const radius = child.geometry.boundingSphere.radius;
-                                if (radius > 0.1) { // Only objects > 10cm radius
-                                    const edges = new THREE.EdgesGeometry(child.geometry, 40); 
+                            // 🌟 4. EDGES: พระเอกของงาน (ทำให้ดูเหมือนแบบก่อสร้าง)
+                            // เปิดใช้งาน Edges แต่ปรับสีให้อ่อนลง (เทา) เพื่อความสบายตา
+                            if (child.geometry) {
+                                // เช็คขนาดก่อนสร้างเส้นขอบ เพื่อไม่ให้เครื่องค้าง
+                                const radius = child.geometry.boundingSphere ? child.geometry.boundingSphere.radius : 1;
+                                
+                                if (radius > 0.2) { // เฉพาะชิ้นที่ใหญ่กว่า 20cm
+                                    const edges = new THREE.EdgesGeometry(child.geometry, 60); // มุมตัด 60 องศา เส้นจะน้อยลงแต่ชัดเจน
                                     const line = new THREE.LineSegments(
                                         edges, 
-                                        new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.25, transparent: true })
+                                        // สีเทาเข้ม (ไม่ใช่ดำสนิท) โปร่งแสงนิดๆ -> ดูแพง
+                                        new THREE.LineBasicMaterial({ color: 0x333333, opacity: 0.4, transparent: true })
                                     );
                                     line.material.clippingPlanes = clippingPlanes;
                                     child.add(line);
@@ -266,8 +285,7 @@
                 },
                 (err) => {
                     console.error(err);
-                    if (proxyIndex < CORS_PROXIES.length) attemptLoad(url, proxyIndex + 1);
-                    else statusText.textContent = "Error loading model.";
+                    statusText.textContent = "Error loading model.";
                 }
             );
         }
@@ -289,7 +307,7 @@
                 modelBounds.center.z + dist
             );
             
-            camera.near = maxDim / 100;
+            camera.near = maxDim / 1000; // ปรับให้ซูมได้ใกล้ขึ้น
             camera.far = maxDim * 100;
             camera.updateProjectionMatrix();
             controls.update();
