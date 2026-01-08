@@ -881,3 +881,9 @@ body {
     color: #c2410c;      /* ตัวหนังสือส้มเข้ม */
     border: 1px solid #fdba74; /* ขอบส้ม */
 }
+/* สถานะ: ลูกค้าแจ้งงานใหม่ (สีชมพูสด - ให้ต่างจากสีเขียว PM) */
+.status-badge.new_request { 
+    background: #fce7f3; /* พื้นชมพูอ่อน */
+    color: #be185d;      /* ตัวหนังสือชมพูเข้ม */
+    border: 1px solid #fbcfe8; 
+}

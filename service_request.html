@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งความประสงค์ขอรับบริการ - CPF</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> 
+
+    <style>
+        body { background: #f0fdf4; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .request-container { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: visible; display: flex; flex-direction: column; }
+        .header-banner { background: linear-gradient(135deg, #0f766e, #115e59); padding: 40px 30px; color: white; text-align: center; border-radius: 20px 20px 0 0; }
+        .header-banner img { height: 60px; margin-bottom: 15px; background: white; padding: 5px; border-radius: 8px; }
+        .header-banner h1 { margin: 0; font-size: 1.8rem; font-weight: 700; }
+        .header-banner p { margin: 5px 0 0; opacity: 0.9; }
+        
+        .contact-info-card { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; margin-top: 20px; text-align: left; display: flex; gap: 20px; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .contact-item { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+        .contact-item i { font-size: 1.2rem; color: #fcd34d; }
+
+        .form-content { padding: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; }
+        .form-control { width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Sarabun'; font-size: 1rem; transition: all 0.3s; }
+        .form-control:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1); }
+        textarea.form-control { resize: vertical; min-height: 120px; }
+        
+        /* ปรับแต่ง Tom Select ให้เข้ากับธีม */
+        .ts-control { border-radius: 8px; padding: 12px 15px; border: 1px solid #d1d5db; font-family: 'Sarabun'; font-size: 1rem; }
+        .ts-control.focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1); }
+        .ts-dropdown { border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); z-index: 9999; }
+
+        .upload-box { border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f9fafb; }
+        .upload-box:hover { border-color: #0f766e; background: #f0fdfa; }
+        .upload-icon { font-size: 2rem; color: #9ca3af; margin-bottom: 10px; }
+        
+        .btn-submit { background: #d97706; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 1.1rem; font-weight: 700; width: 100%; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(217, 119, 6, 0.2); }
+        .btn-submit:hover { background: #b45309; transform: translateY(-2px); }
+        
+        .section-title { font-size: 1.1rem; color: #0f766e; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div class="request-container">
+        <div class="header-banner">
+            <img src="cpf-logo.png" alt="CPF Logo">
+            <h1>แจ้งความประสงค์ขอรับบริการ</h1>
+            <p>กรอกรายละเอียดเพื่อให้เจ้าหน้าที่ประเมินและติดต่อกลับ</p>
+            
+            <div class="contact-info-card">
+                <div class="contact-item"><i class="fas fa-phone-alt"></i> <span>โทร: 02-XXX-XXXX (ฝ่ายวิศวกรรม)</span></div>
+                <div class="contact-item"><i class="fas fa-envelope"></i> <span>อีเมล: construction@cpf.co.th</span></div>
+            </div>
+        </div>
+
+        <div class="form-content">
+            <div class="section-title">1. ข้อมูลผู้ติดต่อ (Contact Info)</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>บริษัท / หน่วยงาน * <span style="font-weight:400; font-size:0.85rem; color:#d97706;">(พิมพ์เพื่อค้นหา หรือ พิมพ์ชื่อใหม่เพื่อสร้าง)</span></label>
+                    <select id="inpCompany" placeholder="ระบุชื่อบริษัท..."></select>
+                </div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>ที่อยู่ / สถานที่ตั้ง *</label>
+                    <textarea id="inpAddress" class="form-control" style="min-height: 60px;" placeholder="ระบุที่อยู่หน้างาน..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>ชื่อผู้ติดต่อ *</label>
+                    <input type="text" id="inpName" class="form-control" placeholder="ชื่อ-นามสกุล">
+                </div>
+                <div class="form-group">
+                    <label>เบอร์โทรศัพท์ *</label>
+                    <input type="tel" id="inpPhone" class="form-control" placeholder="08X-XXX-XXXX">
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top: 10px;">2. รายละเอียดงาน (Work Details)</div>
+            <div class="form-group">
+                <label>หัวข้อเรื่อง / ชื่อโครงการ *</label>
+                <input type="text" id="inpProject" class="form-control" placeholder="เช่น สร้างโรงอาหารใหม่, ซ่อมแซมหลังคา...">
+            </div>
+            <div class="form-group">
+                <label>รายละเอียดความต้องการ (Requirement)</label>
+                <textarea id="inpDetails" class="form-control" placeholder="อธิบายรายละเอียดงาน ขนาด พื้นที่ หรือสิ่งที่ต้องการให้ทำ..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>รูปภาพหน้างาน / เอกสารประกอบ (ถ้ามี)</label>
+                <div class="upload-box" onclick="document.getElementById('inpFile').click()">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p style="margin:0; color:#6b7280;">คลิกเพื่ออัปโหลดไฟล์ (รูปภาพ, PDF)</p>
+                    <p style="margin:0; font-size:0.8rem; color:#9ca3af;" id="fileNameDisplay">ยังไม่ได้เลือกไฟล์</p>
+                    <input type="file" id="inpFile" style="display:none" onchange="showFileName()">
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="submitRequest()">
+                <i class="fas fa-paper-plane"></i> ส่งคำขอรับบริการ
+            </button>
+            <div style="text-align:center; margin-top:15px;">
+                <a href="index.html" style="color:#6b7280; text-decoration:none; font-size:0.9rem;">← กลับหน้าหลัก</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as config from './config.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const supabaseApp = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+        let tomSelect;
+        let locationsData = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. โหลดข้อมูล Location มาใส่ Dropdown
+            const { data } = await supabaseApp.from(config.LOCATION_TABLE).select('*');
+            locationsData = data || [];
+
+            // 2. ตั้งค่า Tom Select
+            tomSelect = new TomSelect('#inpCompany', {
+                options: locationsData.map(l => ({ value: l.id, text: l.site_name, address: l.address, contact: l.contact_person, phone: l.phone })),
+                valueField: 'value',
+                labelField: 'text',
+                searchField: ['text'],
+                create: true, // ✅ อนุญาตให้พิมพ์ชื่อใหม่ได้
+                placeholder: 'พิมพ์ชื่อบริษัท หรือหน่วยงาน...',
+                render: {
+                    option: (data, escape) => `<div><span style="font-weight:bold;">${escape(data.text)}</span> <span style="font-size:0.85em; color:#666;">${escape(data.address || '')}</span></div>`
+                },
+                onChange: (val) => {
+                    // ✅ ถ้าเลือกลูกค้าเก่า -> Auto-fill ข้อมูล
+                    const exist = locationsData.find(l => l.id == val);
+                    if(exist) {
+                        document.getElementById('inpAddress').value = exist.address || '';
+                        document.getElementById('inpName').value = exist.contact_person || '';
+                        document.getElementById('inpPhone').value = exist.phone || '';
+                    }
+                }
+            });
+        });
+
+        window.showFileName = () => {
+            const file = document.getElementById('inpFile').files[0];
+            document.getElementById('fileNameDisplay').innerText = file ? `เลือกไฟล์แล้ว: ${file.name}` : 'ยังไม่ได้เลือกไฟล์';
+            document.getElementById('fileNameDisplay').style.color = file ? '#0f766e' : '#9ca3af';
+        };
+
+        window.submitRequest = async () => {
+            const companyVal = tomSelect.getValue(); // ได้ ID หรือ Text ใหม่
+            const address = document.getElementById('inpAddress').value;
+            const name = document.getElementById('inpName').value;
+            const phone = document.getElementById('inpPhone').value;
+            const project = document.getElementById('inpProject').value;
+            const details = document.getElementById('inpDetails').value;
+            const file = document.getElementById('inpFile').files[0];
+
+            if(!companyVal || !name || !phone || !project) {
+                Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน', 'warning');
+                return;
+            }
+
+            Swal.fire({ title: 'กำลังส่งข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // 1. จัดการ Location (ถ้าเป็นค่าใหม่ ให้ Insert ก่อน)
+                let locId = companyVal;
+                
+                // เช็คว่าค่าที่ได้เป็น ID เดิม หรือเป็น Text ใหม่ (ถ้าหาไม่เจอใน data เดิม แสดงว่าเป็นของใหม่)
+                const isExisting = locationsData.find(l => l.id == companyVal);
+                
+                if (!isExisting) {
+                    // สร้าง Location ใหม่
+                    const { data: newLoc, error: locErr } = await supabaseApp.from(config.LOCATION_TABLE)
+                        .insert([{ 
+                            site_name: companyVal, // ใช้ค่าที่พิมพ์มาเป็นชื่อ
+                            address: address, 
+                            contact_person: name,
+                            phone: phone 
+                        }]).select().single();
+                    
+                    if(locErr) throw new Error('สร้างข้อมูลลูกค้าใหม่ไม่สำเร็จ: ' + locErr.message);
+                    locId = newLoc.id;
+                } else {
+                    // ถ้าเป็นลูกค้าเก่า อัปเดตข้อมูลล่าสุดให้ด้วย
+                    await supabaseApp.from(config.LOCATION_TABLE).update({
+                        contact_person: name,
+                        phone: phone,
+                        address: address // อัปเดตที่อยู่เผื่อเปลี่ยน
+                    }).eq('id', locId);
+                }
+
+                // 2. อัปโหลดรูป (ถ้ามี)
+                let fileUrl = null;
+                if(file) {
+                    const fileName = `REQ_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                    await supabaseApp.storage.from(config.BUCKET_NAME).upload(`requests/${fileName}`, file);
+                    const { data: urlData } = supabaseApp.storage.from(config.BUCKET_NAME).getPublicUrl(`requests/${fileName}`);
+                    fileUrl = urlData.publicUrl;
+                }
+
+                // 3. บันทึก Project
+                const { error } = await supabaseApp.from(config.PROJECT_TABLE).insert([{
+                    projectName: project,
+                    location_id: locId,
+                    status: 'new_request', // สถานะงานใหม่ (สีชมพู)
+                    requirement: details,
+                    projectImage: fileUrl,
+                    created_at: new Date().toISOString(),
+                    prepared_by: 'Customer (Web)'
+                }]);
+
+                if(error) throw error;
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ได้รับข้อมูลแล้ว',
+                    text: 'เจ้าหน้าที่จะติดต่อกลับไปยังเบอร์โทรศัพท์ที่ท่านแจ้งไว้โดยเร็วที่สุดครับ',
+                    confirmButtonText: 'ตกลง'
+                }).then(() => window.location.href = 'index.html');
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

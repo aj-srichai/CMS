@@ -609,135 +609,81 @@ const getPMOwner = (p) => getEmployeeName(p.PMOwner);
 
 function renderAdminTable(projectsToDisplay) {
     const tableContentEl = document.getElementById('tableContent');
-    
-    // 1. แยกข้อมูล Active / Closed
     const activeProjects = projectsToDisplay.filter(p => p.status !== 'closed');
     const closedProjects = projectsToDisplay.filter(p => p.status === 'closed');
 
     let html = `
         <div class="dashboard-summary">
-            <div class="chart-container">
-                <canvas id="projectChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="projectChart"></canvas></div>
             <div class="summary-cards">
-                <div class="card-stat total">
-                    <h3>ทั้งหมด</h3>
-                    <p>${projectsToDisplay.length}</p>
-                </div>
-                <div class="card-stat active">
-                    <h3>กำลังทำ</h3>
-                    <p>${activeProjects.length}</p>
-                </div>
-                <div class="card-stat done">
-                    <h3>เสร็จแล้ว</h3>
-                    <p>${closedProjects.length}</p>
-                </div>
+                <div class="card-stat total"><h3>ทั้งหมด</h3><p>${projectsToDisplay.length}</p></div>
+                <div class="card-stat active"><h3>กำลังทำ</h3><p>${activeProjects.length}</p></div>
+                <div class="card-stat done"><h3>เสร็จแล้ว</h3><p>${closedProjects.length}</p></div>
             </div>
         </div>
     `;
 
-    // 2. ฟังก์ชันย่อยสร้างแถวตาราง
     const createRow = (project) => {
         const escapedProject = JSON.stringify(project).replace(/"/g, '&quot;');
         const isClosed = project.status === 'closed';
         const statusText = config.statusMap[project.status] || project.status || 'N/A';
         
         let view3DBtn = '';
-        if (project.ifcModel) {
-            view3DBtn = `
-                <button class="btn btn-simple-action" 
-                    style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" 
-                    onclick="event.stopPropagation(); window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"
-                    title="เปิดโมเดล 3D">
-                    <i class="fas fa-cube"></i> 3D
-                </button>
-            `;
-        }
+        if (project.ifcModel) view3DBtn = `<button class="btn btn-simple-action" style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" onclick="window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"><i class="fas fa-cube"></i> 3D</button>`;
         
         let actionButtons = '';
         
-        // 🟢 กรณีรออนุมัติ (ภายใน)
-        if (project.status === 'wait_for_approval') {
+        // 🟢 1. งานมาใหม่ -> ปุ่มสร้างใบเสนอราคา
+        if (project.status === 'new_request') {
+            actionButtons = `
+                <button class="btn btn-simple-action" style="background:#d1fae5; color:#047857; border:1px solid #34d399;" 
+                    onclick="window.open('quotation.html?id=${project.id}&mode=internal', '_blank')">
+                    <i class="fas fa-file-invoice-dollar"></i> สร้างใบเสนอราคา
+                </button>
+                <button class="btn btn-simple-action" onclick="window.App.toggleForm(${escapedProject})">ดูรายละเอียด</button>
+                <button class="btn btn-simple-delete" onclick="window.App.deleteProject(${project.id})">ลบ</button>
+            `;
+        }
+        // 🟡 2. รออนุมัติ (พี่ฝัด)
+        else if (project.status === 'wait_for_approval') {
             actionButtons = `
                 <button class="btn btn-simple-action" style="background:#dcfce7; color:#166534; border-color:#bbf7d0;" 
-                    onclick="event.stopPropagation(); window.App.openApprovalModal(${project.id}, '${project.projectName}')">
+                    onclick="window.App.openApprovalModal(${project.id}, '${project.projectName}')">
                     <i class="fas fa-pen-nib"></i> เซ็นอนุมัติ
                 </button>
-                ${view3DBtn} 
-                <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
+                <button class="btn btn-simple-delete" onclick="window.App.deleteProject(${project.id})">ลบ</button>
             `;
         } 
-        // 🟠 กรณีรออนุมัติ (ลูกค้า) -> มี 2 ปุ่มตามที่พี่เจขอครับ
+        // 🟠 3. รอลูกค้า (พิมพ์ / เซ็นหน้างาน)
         else if (project.status === 'wait_for_customer') {
             actionButtons = `
                 <button class="btn btn-simple-action" style="background:#fef9c3; color:#854d0e; border:1px solid #fde047; margin-right:4px;" 
-                    onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=print', '_blank')">
-                    <i class="fas fa-print"></i> พิมพ์
-                </button>
-                
+                    onclick="window.open('quotation.html?id=${project.id}&mode=print', '_blank')"><i class="fas fa-print"></i> พิมพ์</button>
                 <button class="btn btn-simple-action" style="background:#d97706; color:white; border:none; margin-right:4px;" 
-                    onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=customer', '_blank')">
-                    <i class="fas fa-pen-nib"></i> เซ็นหน้างาน
-                </button>
-
-                <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">แก้ไข</button>
-                <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
+                    onclick="window.open('quotation.html?id=${project.id}&mode=customer', '_blank')"><i class="fas fa-pen-nib"></i> เซ็นหน้างาน</button>
+                <button class="btn btn-simple-action" onclick="window.App.toggleForm(${escapedProject})">แก้ไข</button>
             `;
         }
-        // 🔵 กรณีอื่นๆ
+        // 🔵 4. อื่นๆ
         else if (!isClosed) {
-            let printBtn = '';
-            if (project.approver_sign) {
-                printBtn = `
-                    <button class="btn btn-simple-action" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; margin-right:4px;" 
-                        onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=print', '_blank')">
-                        <i class="fas fa-print"></i> ใบสั่งจ้าง
-                    </button>`;
-            }
-
-            actionButtons = `
-                ${printBtn}
-                ${view3DBtn} 
-                <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">แก้ไข</button>
-                <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
-            `;
+            let printBtn = project.approver_sign ? `<button class="btn btn-simple-action" style="background:#f3f4f6; margin-right:4px;" onclick="window.open('quotation.html?id=${project.id}&mode=print', '_blank')"><i class="fas fa-print"></i> ใบสั่งจ้าง</button>` : '';
+            actionButtons = `${printBtn} ${view3DBtn} <button class="btn btn-simple-action" onclick="window.App.toggleForm(${escapedProject})">แก้ไข</button> <button class="btn btn-simple-delete" onclick="window.App.deleteProject(${project.id})">ลบ</button>`;
         } else {
-            actionButtons = `
-                ${view3DBtn} <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">ดู</button>
-            `;
+            actionButtons = `${view3DBtn} <button class="btn btn-simple-action" onclick="window.App.toggleForm(${escapedProject})">ดู</button>`;
         }
-
-        const workScopes = [
-            project.workScopeDesign ? 'ออกแบบ' : null,
-            project.workScopeBidding ? 'ประมูล' : null,
-            project.workScopePM ? 'บริหารโครงการ' : null
-        ].filter(Boolean).join(', ') || '-';
 
         return `
             <tr class="project-summary-row" onclick="window.App.toggleDetails(${project.id})">
                 <td><strong>${project.projectName || '-'}</strong></td>
                 <td><span class="status-badge ${project.status}">${statusText}</span></td>
-                <td>${getPM(project)}</td>
+                <td>${project.Location ? project.Location.site_name : '-'}</td>
                 <td class="action-buttons" style="white-space: nowrap;">${actionButtons}</td>
             </tr>
             <tr class="project-details-row" id="details-${project.id}" style="display: none;">
                 <td colspan="4">
                     <div class="details-grid" style="padding:1rem;">
-                        <p><strong>สถานที่:</strong> ${getLocation(project)}</p>
-                        <p><strong>ขอบเขตงาน:</strong> ${workScopes}</p>
-                        <p><strong>ผู้จัดการ:</strong> ${getPM(project)}</p>
-                        <p><strong>งบประมาณ:</strong> ${project.budget ? project.budget.toLocaleString('th-TH') : '-'}</p>
-                        
-                        ${project.approver_sign ? 
-                          `<div style="grid-column: 1 / -1; margin-top:10px; border:1px dashed #ccc; padding:5px; border-radius:8px; width:fit-content; background: #fff;">
-                              <p style="font-size:0.8rem; margin:0; color:#666;">ผู้อนุมัติ (Reviewed By):</p>
-                              <img src="${project.approver_sign}" style="height:40px; margin-top:5px;">
-                           </div>` : ''
-                        }
-                        
-                        <div style="grid-column: 1 / -1; margin-top:10px; padding-top:10px; border-top:1px dashed #eee; color:#666; font-size:0.9em;">
-                            <i class="fas fa-info-circle"></i> คลิกปุ่ม "แก้ไข" หรือ "ดู" เพื่อดูรายละเอียดไฟล์แนบทั้งหมด
-                        </div>
+                        <p><strong>รายละเอียด:</strong> ${project.requirement || '-'}</p>
+                        ${project.projectImage ? `<p><strong>รูปหน้างาน:</strong> <a href="${project.projectImage}" target="_blank">ดูรูปภาพ</a></p>` : ''}
                     </div>
                 </td>
             </tr>
@@ -746,20 +692,21 @@ function renderAdminTable(projectsToDisplay) {
 
     html += `<h3 style="color: var(--primary-dark); margin-bottom: 1rem;">โครงการที่กำลังดำเนินการ (${activeProjects.length})</h3>`;
     if (activeProjects.length > 0) {
-        html += `<table><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ผู้จัดการ</th><th>จัดการ</th></tr></thead><tbody>`;
+        html += `<table><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ลูกค้า</th><th>จัดการ</th></tr></thead><tbody>`;
         activeProjects.forEach(p => html += createRow(p));
         html += `</tbody></table>`;
     } else {
-        html += `<div style="text-align:center; padding:2rem; background:#f9f9f9; border-radius:10px;">ไม่มีโครงการที่กำลังดำเนินการ</div>`;
+        html += `<div style="text-align:center; padding:2rem; background:#f9f9f9;">ไม่มีโครงการ</div>`;
     }
-
+    
+    // ... (ส่วน Closed Project เหมือนเดิม) ...
     html += `<h3 style="color: #64748b; margin-top: 3rem; margin-bottom: 1rem;">โครงการที่เสร็จสิ้นแล้ว (${closedProjects.length})</h3>`;
     if (closedProjects.length > 0) {
-        html += `<table style="opacity:0.8;"><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ผู้จัดการ</th><th>จัดการ</th></tr></thead><tbody>`;
+        html += `<table style="opacity:0.8;"><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ลูกค้า</th><th>จัดการ</th></tr></thead><tbody>`;
         closedProjects.forEach(p => html += createRow(p));
         html += `</tbody></table>`;
     } else {
-        html += `<div style="text-align:center; padding:2rem; background:#f9f9f9; border-radius:10px;">ไม่มีโครงการที่เสร็จสิ้น</div>`;
+        html += `<div style="text-align:center; padding:2rem; background:#f9f9f9;">ไม่มีโครงการที่เสร็จสิ้น</div>`;
     }
 
     tableContentEl.innerHTML = html;
@@ -1053,10 +1000,11 @@ function renderDashboardChart() {
     const ctx = document.getElementById('projectChart');
     if (!ctx) return; 
 
-    // ✅ ส่วนที่แก้: เปลี่ยนการนับจาก 'survey' เป็น 'wait_for_approval' และ 'wait_for_customer'
+    // ✅ นับยอดรวมทุกสถานะ
     const stats = {
+        new_req: projects.filter(p => p.status === 'new_request').length, // <--- เพิ่มอันนี้
         wait: projects.filter(p => p.status === 'wait_for_approval').length,
-        customer: projects.filter(p => p.status === 'wait_for_customer').length, // เพิ่มสถานะรอลูกค้า
+        customer: projects.filter(p => p.status === 'wait_for_customer').length,
         design: projects.filter(p => p.status === 'design').length,
         bidding: projects.filter(p => p.status === 'bidding').length,
         pm: projects.filter(p => p.status === 'pm').length,
@@ -1064,26 +1012,33 @@ function renderDashboardChart() {
     };
 
     const data = {
-        // ✅ เปลี่ยน Label ให้ตรงกับข้อมูล
-        labels: ['รออนุมัติ', 'รอลูกค้า', 'ออกแบบ', 'ประมูล', 'บริหาร', 'เสร็จสิ้น'],
+        // ✅ เพิ่ม Label และ Data
+        labels: ['แจ้งงานใหม่', 'รออนุมัติ', 'รอลูกค้า', 'ออกแบบ', 'ประมูล', 'บริหาร', 'เสร็จสิ้น'],
         datasets: [{
-            data: [stats.wait, stats.customer, stats.design, stats.bidding, stats.pm, stats.closed],
+            data: [
+                stats.new_req, 
+                stats.wait, 
+                stats.customer, 
+                stats.design, 
+                stats.bidding, 
+                stats.pm, 
+                stats.closed
+            ],
             backgroundColor: [
-                '#fcd34d', // เหลือง (รออนุมัติ)
-                '#fb923c', // ส้ม (รอลูกค้า) - เพิ่มสีนี้
-                '#bae6fd', // ฟ้า (Design)
-                '#fed7aa', // ส้มอ่อน (Bidding)
-                '#bbf7d0', // เขียว (PM)
-                '#cbd5e1'  // เทา (Closed)
+                '#f472b6', // 🩷 ชมพู (แจ้งงานใหม่ - สีใหม่!)
+                '#fcd34d', // 🟡 เหลือง (รออนุมัติ)
+                '#fb923c', // 🟠 ส้ม (รอลูกค้า)
+                '#bae6fd', // 🔵 ฟ้า (Design)
+                '#fed7aa', // 🟤 ส้มอ่อน (Bidding)
+                '#bbf7d0', // 🟢 เขียว (PM)
+                '#cbd5e1'  // ⚪️ เทา (Closed)
             ],
             borderWidth: 0,
             hoverOffset: 10
         }]
     };
 
-    // ถ้ามีกราฟเดิมอยู่ ให้ทำลายก่อนสร้างใหม่ (ป้องกันกราฟซ้อนกัน)
     if (statusChart) statusChart.destroy();
-
     statusChart = new Chart(ctx, {
         type: 'doughnut', 
         data: data,

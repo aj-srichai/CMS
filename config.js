@@ -14,6 +14,7 @@ export const BUCKET_NAME = 'project-files';
 
 // 3. Application Mappings and Constants
 export const statusMap = {
+    new_request: '📣 ลูกค้าแจ้งงานใหม่',
     wait_for_approval: 'รออนุมัติ (ใบเสนอราคา)',
     wait_for_customer: 'รออนุมัติ (ลูกค้า)',
     design: 'รอทีมออกแบบ',
