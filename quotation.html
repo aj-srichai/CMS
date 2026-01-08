@@ -130,11 +130,26 @@
             border: 1px solid #000; padding: 6px; margin-bottom: 6px;
         }
 
+        /* --- [NEW] Sign Modal Styles --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center;
+            width: 90%; max-width: 450px;
+            animation: popUp 0.3s ease-out;
+        }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
         /* ✅ Print / PDF Mode */
         @media print {
             @page { size: A4; margin: 0; }
             body, html { margin: 0; padding: 0; background: white; }
-            .toolbar { display: none; }
+            .toolbar, .modal-overlay { display: none !important; }
             #paper-wrapper { width: 100%; margin: 0; padding: 0; }
             #invoice-paper { 
                 width: 210mm; min-height: 297mm; 
@@ -157,12 +172,32 @@
         <button class="btn-action btn-new" onclick="clearCustomer()">
             <i class="fas fa-user-plus"></i> ล้างข้อมูล
         </button>
-        <button class="btn-action" onclick="saveAndGen()">
+        <button class="btn-action" onclick="openSignModal()">
             <i class="fas fa-save"></i> บันทึก & สร้าง PDF
         </button>
         <a href="index.html" class="btn-action btn-back" style="text-decoration:none;">
-    <i class="fas fa-times"></i> กลับหน้าหลัก
-</a>
+            <i class="fas fa-times"></i> กลับหน้าหลัก
+        </a>
+    </div>
+
+    <div id="signModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#0f3d33;">✍️ ลงนามผู้จัดทำ (Prepared By)</h3>
+            <p style="color:#666; font-size:0.9rem;">กรุณาเซ็นชื่อเพื่อยืนยันการสร้างใบเสนอราคา</p>
+            
+            <div style="border: 2px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; margin: 15px 0; position: relative;">
+                <canvas id="canvasPrepared" width="380" height="200" style="width:100%; touch-action:none; cursor: crosshair;"></canvas>
+                <div style="position:absolute; bottom:5px; left:0; width:100%; text-align:center; color:#ccc; font-size:0.8rem; pointer-events:none;">เซ็นชื่อที่นี่</div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="clearPreparedSign()" class="btn-action" style="background:#f1f5f9; color:#333; flex:1; justify-content:center;">ล้าง</button>
+                <button onclick="closeSignModal()" class="btn-action" style="background:#f1f5f9; color:#333; flex:1; justify-content:center;">ยกเลิก</button>
+            </div>
+            <button onclick="confirmSave()" class="btn-action" style="width:100%; margin-top:10px; justify-content: center; background: linear-gradient(135deg, #0f766e, #115e59);">
+                <i class="fas fa-check-circle"></i> ยืนยันและบันทึก
+            </button>
+        </div>
     </div>
 
     <div id="paper-wrapper">
@@ -355,22 +390,36 @@
                 </tr>
             </table>
 
-            <table class="layout-table" style="margin-top:10px; text-align:center; font-size:9.5pt;">
+            <table class="layout-table" style="margin-top:20px; text-align:center; font-size:9.5pt;">
                 <tr>
-                    <td style="width:33%;">
-                        <b>Prepared By</b><br><span style="font-size:8.5pt;">(ผู้จัดทำ)</span>
-                        <div style="border-bottom:1px solid #000; width:75%; margin:25px auto 4px auto;"></div>
-                        <span style="font-size:8.5pt;">Date: ____/____/______</span>
+                    <td style="width:33%; vertical-align: bottom;">
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                            <img id="showSignPrepared" style="max-height: 50px; max-width: 100%; display: none;">
+                        </div>
+                        <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
+                        <b>Prepared By</b><br>
+                        <span style="font-size:8.5pt;">(ผู้จัดทำ)</span><br>
+                        <span style="font-size:8.5pt;">Date: <span id="datePrepared"></span></span>
                     </td>
-                    <td style="width:33%;">
-                        <b>Reviewed By</b><br><span style="font-size:8.5pt;">(ผู้ตรวจสอบ)</span>
-                        <div style="border-bottom:1px solid #000; width:75%; margin:25px auto 4px auto;"></div>
-                        <span style="font-size:8.5pt;">Date: ____/____/______</span>
+
+                    <td style="width:33%; vertical-align: bottom;">
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                            <img id="showSignReview" style="max-height: 50px; max-width: 100%; display: none;">
+                        </div>
+                        <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
+                        <b>Reviewed By</b><br>
+                        <span style="font-size:8.5pt;">(ผู้ตรวจสอบ)</span><br>
+                        <span style="font-size:8.5pt;">Date: <span id="dateReviewed">____/____/______</span></span>
                     </td>
-                    <td style="width:33%;">
-                        <b>Accepted By</b><br><span style="font-size:8.5pt;">(ลูกค้า/ผู้อนุมัติ)</span>
-                        <div style="border-bottom:1px solid #000; width:75%; margin:25px auto 4px auto;"></div>
-                        <span style="font-size:8.5pt;">Date: ____/____/______</span>
+
+                    <td style="width:33%; vertical-align: bottom;">
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                            <img id="showSignCustomer" style="max-height: 50px; max-width: 100%; display: none;">
+                        </div>
+                        <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
+                        <b>Accepted By</b><br>
+                        <span style="font-size:8.5pt;">(ลูกค้า/ผู้อนุมัติ)</span><br>
+                        <span style="font-size:8.5pt;">Date: <span id="dateCustomer">____/____/______</span></span>
                     </td>
                 </tr>
             </table>
@@ -378,6 +427,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    
     <script type="module">
         import * as config from './config.js';
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -385,83 +436,165 @@
         const supabaseApp = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
         let tomSelect;
         let customerData = [];
+        let padPrepared = null; 
 
-        // เช็คว่าใครเข้ามา (Admin หรือ Guest)
+        // เช็คโหมด
         const urlParams = new URLSearchParams(window.location.search);
         const isInternal = urlParams.get('mode') === 'internal';
+        const paramId = urlParams.get('id'); // รับ ID มาเพื่อเปิดดู/พิมพ์
+        const isPrintMode = urlParams.get('mode') === 'print';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('inpDate').valueAsDate = new Date();
+            // โหลดข้อมูลถ้ามี ID
+            if (paramId) {
+                await loadExistingQuotation(paramId);
+            } else {
+                await setupNewQuotation();
+            }
+
+            // ถ้าเป็นโหมด Print ให้สั่งพิมพ์อัตโนมัติ
+            if (isPrintMode) {
+                setTimeout(() => window.print(), 1000);
+            }
+            calc();
+        });
+
+        // ฟังก์ชันเปิด Modal เซ็นชื่อ (แทนที่จะโชว์คาไว้ที่ Toolbar)
+        window.openSignModal = function() {
+            let projName = document.getElementById('inpProjectName').value;
+            const cusName = document.getElementById('inpCusName').value;
             
-            const { count } = await supabaseApp.from(config.PROJECT_TABLE)
-                .select('*', { count: 'exact', head: true });
+            if(!projName || !cusName) { 
+                Swal.fire('ข้อมูลไม่ครบ', 'ระบุชื่อลูกค้าและชื่อโครงการ', 'warning'); return; 
+            }
+
+            document.getElementById('signModal').style.display = 'flex';
+            
+            // Init Pad ถ้ายังไม่เคยสร้าง (ต้องรอ Modal แสดงก่อน Canvas ถึงจะมีขนาดจริง)
+            if (!padPrepared) {
+                const canvas = document.getElementById('canvasPrepared');
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                padPrepared = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,0)', penColor:'rgb(0,0,0)' });
+            }
+        };
+
+        window.closeSignModal = function() {
+            document.getElementById('signModal').style.display = 'none';
+        };
+
+        window.clearPreparedSign = function() {
+            if (padPrepared) padPrepared.clear();
+        };
+
+        // กดปุ่มยืนยันใน Modal -> ทำงานบันทึกจริง
+        window.confirmSave = function() {
+            if (!padPrepared || padPrepared.isEmpty()) {
+                Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนบันทึก', 'warning');
+                return;
+            }
+            closeSignModal();
+            executeSave();
+        };
+
+        async function setupNewQuotation() {
+            document.getElementById('inpDate').valueAsDate = new Date();
+            document.getElementById('datePrepared').innerText = new Date().toLocaleDateString('th-TH');
+
+            const { count } = await supabaseApp.from(config.PROJECT_TABLE).select('*', { count: 'exact', head: true });
             const nextId = (count || 0) + 1;
             document.getElementById('sysRefID').innerText = `#${nextId}`;
             
             const year = new Date().getFullYear();
-            document.getElementById('inpQuoteNo').value = 
-                `QT-${year}-${String(nextId).padStart(4,'0')}`;
+            document.getElementById('inpQuoteNo').value = `QT-${year}-${String(nextId).padStart(4,'0')}`;
 
+            await loadCustomers();
+        }
+
+        async function loadExistingQuotation(id) {
+            const { data: proj, error } = await supabaseApp.from(config.PROJECT_TABLE).select('*').eq('id', id).single();
+            if (error || !proj) {
+                Swal.fire('Error', 'ไม่พบข้อมูลใบเสนอราคา', 'error');
+                return;
+            }
+
+            // เติมข้อมูลลง Input
+            document.getElementById('inpProjectName').value = proj.projectName || '';
+            document.getElementById('valGrandTotal').innerText = (proj.budget || 0).toLocaleString('th-TH', {minimumFractionDigits:2});
+            
+            // 1. ผู้จัดทำ
+            if (proj.prepared_sign) {
+                document.getElementById('showSignPrepared').src = proj.prepared_sign;
+                document.getElementById('showSignPrepared').style.display = 'block';
+                if(proj.created_at) {
+                    const d = new Date(proj.created_at);
+                    document.getElementById('datePrepared').innerText = d.toLocaleDateString('th-TH');
+                }
+            }
+
+            // 2. ผู้ตรวจสอบ
+            if (proj.approver_sign) {
+                document.getElementById('showSignReview').src = proj.approver_sign;
+                document.getElementById('showSignReview').style.display = 'block';
+                if(proj.approved_at) {
+                    const d = new Date(proj.approved_at);
+                    document.getElementById('dateReviewed').innerText = d.toLocaleDateString('th-TH');
+                }
+            }
+
+            // 3. ลูกค้า
+            if (proj.customer_sign) {
+                document.getElementById('showSignCustomer').src = proj.customer_sign;
+                document.getElementById('showSignCustomer').style.display = 'block';
+            }
+            
+            // ดึงข้อมูลลูกค้า
+            if(proj.location_id) {
+                 const { data: loc } = await supabaseApp.from(config.LOCATION_TABLE).select('*').eq('id', proj.location_id).single();
+                 if(loc) {
+                     document.getElementById('inpCusName').value = loc.site_name;
+                     document.getElementById('inpCusAddr').value = loc.address || '';
+                     document.getElementById('inpCusTax').value = loc.tax_id || '';
+                 }
+            }
+        }
+
+        async function loadCustomers() {
             const { data } = await supabaseApp.from(config.LOCATION_TABLE).select('*');
             customerData = data || [];
-
             const selectEl = document.getElementById('selCustomer');
             if (selectEl && !tomSelect) {
                 tomSelect = new TomSelect('#selCustomer', {
                     options: customerData.map(c => ({
-                        value: c.id, 
-                        text: c.site_name,
-                        address: c.address || '',
-                        tax_id: c.tax_id || ''
+                        value: c.id, text: c.site_name, address: c.address || '', tax_id: c.tax_id || ''
                     })),
-                    valueField: 'value', 
-                    labelField: 'text', 
-                    searchField: ['text', 'address'],
-                    placeholder: 'พิมพ์ชื่อบริษัท...', 
-                    maxOptions: 50,
-                    render: {
-                        option: (data, escape) => 
-                            `<div style="padding:8px;">
-                                <div style="font-weight:600; font-size:14px;">${escape(data.text)}</div>
-                                ${data.address ? '<div style="font-size:12px; color:#666; margin-top:2px;">' + escape(data.address) + '</div>' : ''}
-                            </div>`,
-                        item: (data, escape) => `<div>${escape(data.text)}</div>`
-                    },
+                    valueField: 'value', labelField: 'text', searchField: ['text', 'address'],
+                    placeholder: 'พิมพ์ชื่อบริษัท...', maxOptions: 50,
                     onChange: (val) => {
                         const found = customerData.find(c => c.id == val);
                         if(found) {
                             document.getElementById('inpCusName').value = found.site_name || '';
                             document.getElementById('inpCusAddr').value = found.address || '';
                             document.getElementById('inpCusTax').value = found.tax_id || '';
-                            document.getElementById('inpContactName').focus();
                         }
                     }
                 });
             }
-            calc();
-        });
-
-        window.clearCustomer = () => {
-            if(tomSelect) tomSelect.clear();
-            document.querySelectorAll('input[id^="inpCus"], #inpContactName').forEach(el => el.value = '');
-        };
+        }
 
         window.calc = () => {
             const cost = parseFloat(document.getElementById('inpCost').value) || 0;
             const rate = parseFloat(document.getElementById('inpRate').value) || 0;
             const discP = parseFloat(document.getElementById('inpDisc').value) || 0;
-            
             const fee = cost * (rate / 100);
             const discount = fee * (discP / 100);
             const afterDisc = fee - discount;
             const vat = afterDisc * 0.07;
             const total = afterDisc + vat;
             
-            const fmt = (n) => n.toLocaleString(undefined, {
-                minimumFractionDigits:2, 
-                maximumFractionDigits:2
-            });
-            
+            const fmt = (n) => n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
             document.getElementById('outUnitPrice').innerText = fmt(fee);
             document.getElementById('outAmount').innerText = fmt(fee);
             document.getElementById('valSubtotal').innerText = fmt(fee);
@@ -471,129 +604,92 @@
             document.getElementById('valGrandTotal').innerText = fmt(total);
         };
 
-        window.saveAndGen = async function() {
+        // ฟังก์ชันบันทึกจริง (แยกออกมาเรียกหลัง Modal)
+        async function executeSave() {
             let projName = document.getElementById('inpProjectName').value;
             const cusName = document.getElementById('inpCusName').value;
             const grandTotal = parseFloat(document.getElementById('valGrandTotal').innerText.replace(/,/g, ''));
 
-            if(!projName || !cusName) { 
-                Swal.fire('ข้อมูลไม่ครบ', 'ระบุชื่อลูกค้าและชื่อโครงการ', 'warning'); 
-                return; 
+            if (isInternal && !projName.includes('(กรอกแทน)')) {
+                projName += ' (กรอกแทน)';
+                document.getElementById('inpProjectName').value = projName;
+            }
+            
+            // เก็บ Signature จาก Modal
+            let preparedSignData = null;
+            if (padPrepared && !padPrepared.isEmpty()) {
+                preparedSignData = padPrepared.toDataURL();
+                // แปะลงกระดาษเพื่อ Gen PDF
+                document.getElementById('showSignPrepared').src = preparedSignData;
+                document.getElementById('showSignPrepared').style.display = 'block';
             }
 
-            // ✅ Logic 2: ถ้าเป็นเจ้าหน้าที่ภายใน ให้เติมคำว่า (กรอกแทน)
-            if (isInternal) {
-                // เช็คกันเบิ้ลเผื่อกดซ้ำ
-                if (!projName.includes('(กรอกแทน)')) {
-                    projName += ' (กรอกแทน)';
-                    document.getElementById('inpProjectName').value = projName; // อัปเดตหน้าจอให้เห็นด้วย
-                }
-            }
-
-            Swal.fire({ 
-                title: 'กำลังบันทึก...', text: 'ระบบกำลังจัดหน้า PDF และอัปโหลด', 
-                allowOutsideClick: false, didOpen: () => Swal.showLoading() 
-            });
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
                 let locId = tomSelect ? tomSelect.getValue() : null;
                 if(!locId) {
-                    const { data: newLoc, error: locErr } = await supabaseApp
-                        .from(config.LOCATION_TABLE)
-                        .insert([{ 
-                            site_name: cusName, 
-                            address: document.getElementById('inpCusAddr').value, 
-                            tax_id: document.getElementById('inpCusTax').value 
-                        }]).select().single();
+                    const { data: newLoc, error: locErr } = await supabaseApp.from(config.LOCATION_TABLE)
+                        .insert([{ site_name: cusName, address: document.getElementById('inpCusAddr').value, tax_id: document.getElementById('inpCusTax').value }]).select().single();
                     if(locErr) throw new Error(locErr.message);
                     locId = newLoc.id;
                 }
 
-                // --- เริ่มกระบวนการแปลง PDF ---
                 const wrapper = document.getElementById('paper-wrapper');
                 const invoice = document.getElementById('invoice-paper');
-                
                 const oldWrapperStyle = wrapper.style.cssText;
-                const oldInvoiceMargin = invoice.style.margin;
-                const oldInvoiceMinHeight = invoice.style.minHeight;
-
-                wrapper.style.display = 'block';
-                wrapper.style.margin = '0';
-                wrapper.style.width = 'fit-content';
                 
-                invoice.style.margin = '0';
-                invoice.style.minHeight = 'auto'; 
-                invoice.style.height = 'auto'; 
-
+                wrapper.style.margin = '0'; wrapper.style.width = 'fit-content';
+                invoice.style.margin = '0'; invoice.style.boxShadow = 'none';
+                
                 const inputs = document.querySelectorAll('.paper-input');
                 const originalStyles = new Map();
-                
                 inputs.forEach(input => {
-                    originalStyles.set(input, { 
-                        border: input.style.border, 
-                        background: input.style.background, 
-                        padding: input.style.padding,
-                        color: input.style.color 
-                    });
-                    
-                    input.style.border = 'none';
-                    input.style.background = 'white';
-                    input.style.padding = '0';
-                    input.style.setProperty('color', '#000000', 'important'); 
+                    originalStyles.set(input, { border: input.style.border, background: input.style.background });
+                    input.style.border = 'none'; input.style.background = 'white';
                 });
 
                 const opt = {
-                    margin: 0,
-                    filename: `Quotation-${projName}.pdf`,
+                    margin: 0, filename: `Quotation-${projName}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
                 const pdfBlob = await html2pdf().set(opt).from(invoice).outputPdf('blob');
 
                 wrapper.style.cssText = oldWrapperStyle;
-                invoice.style.margin = oldInvoiceMargin;
-                invoice.style.minHeight = oldInvoiceMinHeight;
-                
+                invoice.style.boxShadow = '';
                 inputs.forEach(input => {
-                    const style = originalStyles.get(input);
-                    input.style.border = style.border;
-                    input.style.background = style.background;
-                    input.style.padding = style.padding;
-                    input.style.removeProperty('color'); 
-                    if (style.color) { input.style.color = style.color; }
+                    const s = originalStyles.get(input);
+                    input.style.border = s.border; input.style.background = s.background;
                 });
 
                 const fileName = `QT_${Date.now()}.pdf`;
                 await supabaseApp.storage.from(config.BUCKET_NAME).upload(`quotations/${fileName}`, pdfBlob);
                 const { data: urlData } = supabaseApp.storage.from(config.BUCKET_NAME).getPublicUrl(`quotations/${fileName}`);
 
-                await supabaseApp.from(config.PROJECT_TABLE).insert([{
-                    projectName: projName, location_id: locId, budget: grandTotal, 
-                    status: 'design', quotationPDF: urlData.publicUrl, constructionType: 'โครงการก่อร้างใหม่'
-                }]);
+                const { error: insertError } = await supabaseApp.from(config.PROJECT_TABLE).insert([{
+                projectName: projName, 
+                location_id: locId, 
+                budget: grandTotal, 
+                status: 'wait_for_approval', 
+                quotationPDF: urlData.publicUrl, 
+                constructionType: 'โครงการก่อร้างใหม่',
+                prepared_sign: preparedSignData,
+                prepared_by: 'Admin/Staff', 
+                created_at: new Date().toISOString()
+            }]);
 
-                // ✅ Logic 1: แก้ข้อความแจ้งเตือนตามที่ขอ
-                Swal.fire('สำเร็จ!', 'บันทึกและสร้าง PDF เรียบร้อย', 'success')
-                    .then(() => {
-                        // ✅ ถ้าเป็น จนท. ให้กลับไป admin.html, ถ้าเป็นคนนอกกลับไป index.html
-                        if (isInternal) {
-                            window.location.href = 'admin.html';
-                        } else {
-                            window.location.href = 'index.html';
-                        }
-                    });
+            if (insertError) throw new Error("Database Insert Failed: " + insertError.message);
+
+            Swal.fire('สำเร็จ!', 'บันทึกและส่งรออนุมัติเรียบร้อย', 'success').then(() => {
+                window.location.href = isInternal ? 'admin.html' : 'index.html';
+            });
 
             } catch (err) {
                 console.error(err);
                 Swal.fire('Error', err.message, 'error');
-                document.getElementById('paper-wrapper').style.margin = '0 auto'; 
-                document.querySelectorAll('.paper-input').forEach(i => {
-                    i.style.border = '1px dashed #cbd5e1';
-                    i.style.background = '#fffef8';
-                    i.style.removeProperty('color');
-                });
             }
         }
     </script>

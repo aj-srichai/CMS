@@ -16,6 +16,8 @@ let projects = [];
 let editingProject = null;
 let fileInputs = {};
 let searchTerm = '';
+let signaturePad = null;
+let projectToApproveId = null;
 
 let allEmployees = [];
 let allLocations = [];
@@ -411,7 +413,7 @@ function renderForm() {
     let rightColHtml = ''; // สำหรับ Upload ไฟล์
 
     // ส่วนแสดงข้อมูล Readonly (ถ้ามี)
-    if (editingProject && (currentRole === 'design' || currentRole === 'bidding' || currentRole === 'pm')) {
+    if (editingProject && (currentRole === 'bidding' || currentRole === 'pm')) {
         leftColHtml += `
             <div class="form-group">
                 <label>ชื่อโครงการ</label>
@@ -698,66 +700,69 @@ function renderAdminTable(projectsToDisplay) {
     const activeProjects = projectsToDisplay.filter(p => p.status !== 'closed');
     const closedProjects = projectsToDisplay.filter(p => p.status === 'closed');
 
-    // ส่วนแสดง Dashboard (กราฟและตัวเลข) คงเดิม
     let html = `
         <div class="dashboard-summary">
             <div class="chart-container">
                 <canvas id="projectChart"></canvas>
             </div>
             <div class="summary-cards">
-                <div class="card-stat total">
-                    <h3>ทั้งหมด</h3>
-                    <p>${projectsToDisplay.length}</p>
-                </div>
-                <div class="card-stat active">
-                    <h3>กำลังทำ</h3>
-                    <p>${activeProjects.length}</p>
-                </div>
-                <div class="card-stat done">
-                    <h3>เสร็จแล้ว</h3>
-                    <p>${closedProjects.length}</p>
-                </div>
+                <div class="card-stat total"><h3>ทั้งหมด</h3><p>${projectsToDisplay.length}</p></div>
+                <div class="card-stat active"><h3>กำลังทำ</h3><p>${activeProjects.length}</p></div>
+                <div class="card-stat done"><h3>เสร็จแล้ว</h3><p>${closedProjects.length}</p></div>
             </div>
         </div>
     `;
 
-    // 2. ฟังก์ชันย่อยสร้างแถวตาราง (อัปเดตเพิ่มปุ่ม 3D)
+    // 2. ฟังก์ชันสร้างแถวตาราง
     const createRow = (project) => {
         const escapedProject = JSON.stringify(project).replace(/"/g, '&quot;');
         const isClosed = project.status === 'closed';
         const statusText = config.statusMap[project.status] || project.status || 'N/A';
         
-        // --- [NEW] สร้างปุ่ม 3D ถ้ามีไฟล์ ---
         let view3DBtn = '';
         if (project.ifcModel) {
-            view3DBtn = `
-                <button class="btn btn-simple-action" 
-                    style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" 
-                    onclick="event.stopPropagation(); window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"
-                    title="เปิดโมเดล 3D">
-                    <i class="fas fa-cube"></i> 3D
-                </button>
-            `;
+            view3DBtn = `<button class="btn btn-simple-action" style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" onclick="event.stopPropagation(); window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"><i class="fas fa-cube"></i> 3D</button>`;
         }
-        // ----------------------------------
-
+        
         let actionButtons = '';
-        if (!isClosed) {
+        
+        // 🟢 กรณีรออนุมัติ: โชว์ปุ่ม "เซ็นอนุมัติ"
+        if (project.status === 'wait_for_approval') {
             actionButtons = `
-                ${view3DBtn} <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">แก้ไข</button>
+                <button class="btn btn-simple-action" style="background:#dcfce7; color:#166534; border-color:#bbf7d0;" 
+                    onclick="event.stopPropagation(); window.App.openApprovalModal(${project.id}, '${project.projectName}')">
+                    <i class="fas fa-pen-nib"></i> เซ็นอนุมัติ
+                </button>
+                ${view3DBtn} 
+                <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
+            `;
+        } 
+        // 🔵 กรณีอนุมัติแล้ว (หรืออยู่ขั้นตอนอื่น): โชว์ปุ่ม "พิมพ์ใบสั่งจ้าง"
+        else if (!isClosed) {
+            // เช็คว่าถ้ามีลายเซ็นพี่ฝัดแล้ว ให้โชว์ปุ่ม Print
+            let printBtn = '';
+            if (project.approver_sign) {
+                printBtn = `
+                    <button class="btn btn-simple-action" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; margin-right:4px;" 
+                        onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=print', '_blank')">
+                        <i class="fas fa-print"></i> ใบสั่งจ้าง
+                    </button>`;
+            }
+
+            actionButtons = `
+                ${printBtn}
+                ${view3DBtn} 
+                <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">แก้ไข</button>
                 <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
             `;
         } else {
-             actionButtons = `
+            // ⚫ กรณีจบโครงการ
+            actionButtons = `
                 ${view3DBtn} <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">ดู</button>
             `;
         }
 
-        const workScopes = [
-            project.workScopeDesign ? 'ออกแบบ' : null,
-            project.workScopeBidding ? 'ประมูล' : null,
-            project.workScopePM ? 'บริหารโครงการ' : null
-        ].filter(Boolean).join(', ') || '-';
+        const workScopes = [project.workScopeDesign?'ออกแบบ':null, project.workScopeBidding?'ประมูล':null, project.workScopePM?'บริหารโครงการ':null].filter(Boolean).join(', ')||'-';
 
         return `
             <tr class="project-summary-row" onclick="window.App.toggleDetails(${project.id})">
@@ -773,17 +778,18 @@ function renderAdminTable(projectsToDisplay) {
                         <p><strong>ขอบเขตงาน:</strong> ${workScopes}</p>
                         <p><strong>ผู้จัดการ:</strong> ${getPM(project)}</p>
                         <p><strong>งบประมาณ:</strong> ${project.budget ? project.budget.toLocaleString('th-TH') : '-'}</p>
-                        
-                        <div style="grid-column: 1 / -1; margin-top:10px; padding-top:10px; border-top:1px dashed #eee; color:#666; font-size:0.9em;">
-                            <i class="fas fa-info-circle"></i> คลิกปุ่ม "แก้ไข" หรือ "ดู" เพื่อดูรายละเอียดไฟล์แนบทั้งหมด
-                        </div>
+                        ${project.approver_sign ? 
+                          `<div style="margin-top:10px; border:1px dashed #ccc; padding:5px; border-radius:8px; width:fit-content;">
+                              <p style="font-size:0.8rem; margin:0; color:#666;">ผู้อนุมัติ (Reviewed By):</p>
+                              <img src="${project.approver_sign}" style="height:40px; margin-top:5px;">
+                           </div>` : ''
+                        }
                     </div>
                 </td>
             </tr>
         `;
     };
 
-    // 3. สร้างตาราง (Active)
     html += `<h3 style="color: var(--primary-dark); margin-bottom: 1rem;">โครงการที่กำลังดำเนินการ (${activeProjects.length})</h3>`;
     if (activeProjects.length > 0) {
         html += `<table><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ผู้จัดการ</th><th>จัดการ</th></tr></thead><tbody>`;
@@ -793,7 +799,6 @@ function renderAdminTable(projectsToDisplay) {
         html += `<div style="text-align:center; padding:2rem; background:#f9f9f9; border-radius:10px;">ไม่มีโครงการที่กำลังดำเนินการ</div>`;
     }
 
-    // 4. สร้างตาราง (Closed)
     html += `<h3 style="color: #64748b; margin-top: 3rem; margin-bottom: 1rem;">โครงการที่เสร็จสิ้นแล้ว (${closedProjects.length})</h3>`;
     if (closedProjects.length > 0) {
         html += `<table style="opacity:0.8;"><thead><tr><th>ชื่อโครงการ</th><th>สถานะ</th><th>ผู้จัดการ</th><th>จัดการ</th></tr></thead><tbody>`;
@@ -860,9 +865,10 @@ function changeRole(role) {
     renderUI();
 }
 
-// --- ในไฟล์ app.js แทนที่ฟังก์ชัน toggleForm เดิมด้วยอันนี้ ---
-
+// ... toggleForm function (คงเดิม ไม่ต้องแก้) ...
 function toggleForm(projectToEdit = null, forceClose = false) {
+    // (ใช้โค้ดเดิมส่วนนี้ได้เลยครับ เพื่อความสั้น ผมละไว้ในฐานที่เข้าใจ หรือถ้าจะให้ชัวร์ก็ใช้ตัวเดิมที่พี่มีอยู่แล้วได้เลย)
+    // แต่เพื่อให้ Copy-Paste ง่าย ผมใส่ตัวเต็มให้เลยดีกว่าครับ กันงง
     if (currentRole === 'admin' && !projectToEdit && !forceClose) {
         const password = prompt("กรุณาใส่รหัสผ่านเพื่อเพิ่มโครงการ:");
         if (password !== '11111') {
@@ -877,7 +883,6 @@ function toggleForm(projectToEdit = null, forceClose = false) {
     const completeBtn = document.getElementById('completeBtn');
     let forwardBtn = document.getElementById('forwardBtn');
 
-    // สร้างปุ่มส่งต่อถ้ายังไม่มี
     if (!forwardBtn) {
         forwardBtn = document.createElement('button');
         forwardBtn.id = 'forwardBtn';
@@ -896,7 +901,6 @@ function toggleForm(projectToEdit = null, forceClose = false) {
         if(addBtnContainer) {
             addBtnContainer.style.display = (currentRole === 'admin' || currentRole === 'survey') ? 'block' : 'none';
         }
-        // Reset ปุ่มให้กลับมาแสดงปกติเผื่อเปิดครั้งหน้า
         saveBtn.style.display = 'block';
         completeBtn.style.display = 'none';
         forwardBtn.style.display = 'none';
@@ -908,18 +912,14 @@ function toggleForm(projectToEdit = null, forceClose = false) {
         document.getElementById('formTitle').textContent = projectToEdit ? `แก้ไขโครงการ: ${projectToEdit.projectName}` : 'เพิ่มโครงการใหม่';
         if(addBtnContainer) addBtnContainer.style.display = 'none';
         
-        // Render Form ก่อน เพื่อให้มี Input Elements
         renderForm(); 
         
-        // --- 🔒 LOGIC ล็อคโครงการ (ใหม่) ---
         const isClosed = projectToEdit && projectToEdit.status === 'closed';
         
-        // 1. จัดการปุ่ม
         if (isClosed) {
             saveBtn.style.display = 'none';
             completeBtn.style.display = 'none';
             forwardBtn.style.display = 'none';
-            // เพิ่มข้อความแจ้งเตือนว่าดูได้อย่างเดียว
             let notice = document.getElementById('closed-notice');
             if(!notice) {
                 notice = document.createElement('div');
@@ -929,11 +929,9 @@ function toggleForm(projectToEdit = null, forceClose = false) {
                 document.getElementById('formTitle').after(notice);
             }
         } else {
-            // ลบแจ้งเตือนถ้ามี
             const notice = document.getElementById('closed-notice');
             if(notice) notice.remove();
 
-            // Logic ปุ่มเดิม
             saveBtn.style.display = 'block';
             saveBtn.textContent = 'บันทึก (ยังไม่ส่ง)';
             
@@ -948,10 +946,8 @@ function toggleForm(projectToEdit = null, forceClose = false) {
             }
         }
 
-        // 2. จัดการ Input (Disable/Enable)
         const allInputs = form.querySelectorAll('input, select, textarea, button.btn-delete-file');
         allInputs.forEach(input => {
-            // ยกเว้นปุ่มปิด/ยกเลิก
             if (input.innerText === 'ยกเลิก' || input.parentElement.classList.contains('header-controls')) return;
             
             if (isClosed) {
@@ -964,7 +960,6 @@ function toggleForm(projectToEdit = null, forceClose = false) {
                 input.style.cursor = 'default';
             }
         });
-        // ------------------------------------
 
         form.style.display = 'block';
         form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1005,6 +1000,84 @@ function clearSearch() {
 }
 
 // -----------------------------------------------------------------
+// ⭐️ 5.3 Functions สำหรับระบบเซ็นอนุมัติ (Signature Pad)
+// -----------------------------------------------------------------
+
+function openApprovalModal(projectId, projectName) {
+    projectToApproveId = projectId;
+    document.getElementById('sign-project-name').textContent = projectName;
+    document.getElementById('approvalModal').style.display = 'flex';
+    
+    // Init Signature Pad
+    const canvas = document.getElementById('signatureCanvas');
+    // ปรับขนาด Canvas ให้ชัดบนจอ Retina/มือถือ
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+
+    if (!signaturePad) {
+        signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgba(255, 255, 255, 0)', // พื้นหลังใส
+            penColor: 'rgb(0, 0, 0)'
+        });
+    } else {
+        signaturePad.clear();
+    }
+}
+
+function closeApprovalModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+    projectToApproveId = null;
+}
+
+function clearSignature() {
+    if (signaturePad) signaturePad.clear();
+}
+
+async function confirmApproval() {
+    if (!signaturePad || signaturePad.isEmpty()) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนกดยืนยัน', 'warning');
+        return;
+    }
+
+    if (!confirm('ยืนยันการอนุมัติ? ลายเซ็นจะถูกบันทึกและไม่สามารถแก้ไขได้')) return;
+
+    showLoading();
+    try {
+        const signatureData = signaturePad.toDataURL(); // ได้เป็น Base64 string
+        
+        // อัปเดต Database
+        const { error } = await supabaseClient
+            .from(config.PROJECT_TABLE)
+            .update({
+                status: 'design', // ✅ เปลี่ยนสถานะเป็น Design เพื่อให้ทีมออกแบบเห็นงานต่อทันที
+                approver_sign: signatureData,
+                approved_by: 'ผู้มีอำนาจลงนาม (System)', // หรือใส่ชื่อ User ที่ Login ถ้าทำระบบ Login แล้ว
+                approved_at: new Date().toISOString()
+            })
+            .eq('id', projectToApproveId);
+
+        if (error) throw error;
+
+        closeApprovalModal();
+        Swal.fire({
+            icon: 'success',
+            title: 'อนุมัติสำเร็จ!',
+            text: 'โครงการถูกส่งต่อไปยังทีมออกแบบแล้ว',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        await fetchProjects(); // โหลดตารางใหม่
+
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// -----------------------------------------------------------------
 // 7. Initial Load
 // -----------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1019,11 +1092,11 @@ let statusChart = null; // ตัวแปรเก็บกราฟ
 
 function renderDashboardChart() {
     const ctx = document.getElementById('projectChart');
-    if (!ctx) return; // ถ้าไม่มี Canvas ไม่ต้องทำ
+    if (!ctx) return; 
 
-    // นับจำนวนสถานะ
+    // [FIX] ปรับ Logic นับสถานะใหม่ (เอารอสำรวจออก ใส่รออนุมัติแทน)
     const stats = {
-        survey: projects.filter(p => p.status === 'survey').length,
+        wait: projects.filter(p => p.status === 'wait_for_approval').length, // <-- อันใหม่
         design: projects.filter(p => p.status === 'design').length,
         bidding: projects.filter(p => p.status === 'bidding').length,
         pm: projects.filter(p => p.status === 'pm').length,
@@ -1031,11 +1104,12 @@ function renderDashboardChart() {
     };
 
     const data = {
-        labels: ['รอสำรวจ', 'รอออกแบบ', 'รอประมูล', 'บริหารโครงการ', 'เสร็จสิ้น'],
+        // [FIX] เปลี่ยน Label เป็นภาษาไทยที่ถูกต้อง
+        labels: ['รออนุมัติ', 'ออกแบบ', 'ประมูล', 'บริหารโครงการ', 'เสร็จสิ้น'],
         datasets: [{
-            data: [stats.survey, stats.design, stats.bidding, stats.pm, stats.closed],
+            data: [stats.wait, stats.design, stats.bidding, stats.pm, stats.closed],
             backgroundColor: [
-                '#d8b4fe', // ม่วง (Survey)
+                '#fcd34d', // เหลือง (Wait)
                 '#bae6fd', // ฟ้า (Design)
                 '#fed7aa', // ส้ม (Bidding)
                 '#bbf7d0', // เขียว (PM)
@@ -1046,11 +1120,10 @@ function renderDashboardChart() {
         }]
     };
 
-    // ถ้ามีกราฟเดิมอยู่ ให้ทำลายก่อนสร้างใหม่
     if (statusChart) statusChart.destroy();
 
     statusChart = new Chart(ctx, {
-        type: 'doughnut', // กราฟวงกลมโดนัท
+        type: 'doughnut', 
         data: data,
         options: {
             responsive: true,
@@ -1064,7 +1137,7 @@ function renderDashboardChart() {
     });
 }
 
-// 8. Export functions
+// ⭐️ 5.4 Export functions (เพิ่มฟังก์ชัน Signature เข้าไป)
 window.App = {
     toggleForm,
     saveProject: () => handleSave('save'),       // ปุ่มบันทึกธรรมดา
@@ -1075,7 +1148,12 @@ window.App = {
     toggleDetails,
     handleSearch,
     removeFile,
-    clearSearch
+    clearSearch,
+    // เพิ่มใหม่สำหรับ Modal
+    openApprovalModal,
+    closeApprovalModal,
+    clearSignature,
+    confirmApproval
 };
 // =========================================
 // PARTICLE NETWORK ANIMATION (JS)
