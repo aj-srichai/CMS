@@ -16,8 +16,8 @@ export const BUCKET_NAME = 'project-files';
 
 // 3. Application Mappings and Constants
 export const statusMap = {
-    survey: 'รอทีมสำรวจโครงการ', // <--- เพิ่มบรรทัดนี้เข้าไปครับ
-    design: 'รอทีมออกแบบ',
+    // ❌ เอา survey ออกแล้ว
+    design: 'รอทีมออกแบบ',      // <--- ✅ เริ่มต้นที่นี่ (รับไม้ต่อจาก Quotation)
     bidding: 'รอทีมประมูล',
     pm: 'รอทีมบริหารโครงการ',
     completed: 'เสร็จสิ้น',
@@ -36,7 +36,11 @@ const constructionTypes = [
 // 5. Fields By Team
 // -----------------------------------------------------------------
 export const fieldsByTeam = {
-    survey: [
+    // ❌ ลบก้อน survey: [...] ทิ้งไปเลย
+
+    // ✅ ทีม Design: ต้องเพิ่ม Field พื้นฐานเข้าไป เพราะตอนนี้เป็นด่านแรกสุด
+    design: [
+        // --- ส่วนข้อมูลพื้นฐาน (ย้ายมาจาก Survey เดิม) ---
         { name: 'projectName', label: 'ชื่อโครงการ', type: 'text', required: true },
         { name: 'location_id', label: 'สถานที่', type: 'select', source: 'locations', required: true },
         { name: 'constructionType', label: 'ประเภทการก่อสร้าง', type: 'select', options: [
@@ -44,34 +48,25 @@ export const fieldsByTeam = {
             'โครงการปรุงงานก่อสร้าง',
             'งานเพิ่ม/ลด จากสัญญาก่อสร้างเดิม'
         ], required: true },
-        { name: 'surveyStartDate', label: 'วันเริ่มงานก่อสร้าง', type: 'date' },
-        { name: 'surveyEndDate', label: 'วันจบงานก่อสร้าง', type: 'date' },
-        { name: 'plannedDuration', label: 'ระยะเวลาตามแผน (วัน)', type: 'number' },
-
-        { name: 'isBudgetEstimated', label: 'ประเมินงบประมาณ', type: 'checkbox', group: 'workScope' },
-        { name: 'workScopeDesign', label: 'งานออกแบบ', type: 'checkbox', group: 'workScope' },
-        { name: 'workScopeBidding', label: 'งานประมูล', type: 'checkbox', group: 'workScope' },
-        { name: 'workScopePM', label: 'งานบริหารโครงการ', type: 'checkbox', group: 'workScope' },
         
-        { name: 'budget', label: 'งบประมาณ', type: 'number' },
-        { name: 'survey_by_id', label: 'ชื่อผู้กรอก', type: 'select', source: 'employees', required: true }
-    ],
-    design: [
-        { name: 'design_owner_id', label: 'ชื่อผู้กรอก', type: 'select', source: 'employees', required: true },
+        // --- ส่วนรับข้อมูลจาก Quotation ---
+        { name: 'budget', label: 'งบประมาณ (จาก Quotation)', type: 'number', readonly: true },
+        { name: 'quotationPDF', label: 'ใบเสนอราคา (.pdf)', type: 'file', accept: '.pdf' },
+
+        // --- ส่วนข้อมูลเดิมของ Design ---
+        { name: 'design_owner_id', label: 'ชื่อผู้กรอก (ผู้ออกแบบ)', type: 'select', source: 'employees', required: true },
         { name: 'project_manager_id', label: 'ผู้บริหารโครงการ', type: 'select', source: 'employees', required: true },
         
-        // ⭐️ แก้ไขตรงนี้: เปลี่ยน Requirement เป็นไฟล์ PDF
         { name: 'requirementPDF', label: `รายละเอียดความต้องการ (Requirement) (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
-        
         { name: 'initialDesignPDF', label: `อัปโหลดแบบขั้นต้น (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'detailedDesignPDF', label: `อัปโหลดแบบรายละเอียด (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'calculationPDF', label: `รายการคำนวณ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'overlapPDF', label: `พื้นที่ทับซ้อน (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'supportingDocsPDF', label: `เอกสารประกอบต่างๆ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
-
         { name: 'rvtModel', label: `อัปโหลดแบบก่อสร้างสามมิติ (.rvt)${fileWarning}`, type: 'file', accept: '.rvt' },
         { name: 'ifcModel', label: `อัปโหลดโมเดลสามมิติ (.ifc)${fileWarning}`, type: 'file', accept: '.ifc' }
     ],
+
     bidding: [
         { name: 'bidding_owner_id', label: 'ชื่อผู้กรอก', type: 'select', source: 'employees', required: true },
         { name: 'actualCost', label: 'ราคาก่อสร้างจริง', type: 'number', required: true },
@@ -79,18 +74,16 @@ export const fieldsByTeam = {
         
         { name: 'projectImage', label: `รูปภาพโครงการ (3D Render)${fileWarning}`, type: 'file', accept: 'image/*' },
         
-        // ข้อ 2: เปลี่ยนจาก ConstructionPDF เป็น BiddingPDF (แบบประมูล)
         { name: 'biddingPDF', label: `อัปโหลดแบบประมูล (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
-
         { name: 'clarificationPDF', label: `บันทึกชี้แจงแบบ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'torPDF', label: `TOR (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'biddingDocsPDF', label: `เอกสารประมูล (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' }
     ],
+
     pm: [
         { name: 'pm_owenr_id', label: 'ชื่อผู้กรอก', type: 'select', source: 'employees', required: true },
         { name: 'actualDuration', label: 'ระยะเวลาก่อสร้างจริง (วัน)', type: 'number' },
         
-        // ข้อ 3: เพิ่มเอกสารใหม่สำหรับ PM
         { name: 'permissionDocsPDF', label: `เอกสารขออนุญาตต่างๆ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'weeklyReportPDF', label: `รายงานประชุมประจำสัปดาห์ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'approvalDocsPDF', label: `เอกสารขออนุมัติต่างๆ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
@@ -99,17 +92,19 @@ export const fieldsByTeam = {
         { name: 'handoverDocsPDF', label: `เอกสารส่งมอบงาน (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'defectChecklistPDF', label: `เอกสารตรวจ Defect ก่อนส่งมอบ (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
         { name: 'weeklySiteImagesPDF', label: `รูปภาพหน้างาน (หน้า/ข้าง/บน) (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' },
-
         { name: 'asBuiltPDF', label: `อัปโหลดแบบ As-Built (.pdf)${fileWarning}`, type: 'file', accept: '.pdf' }
     ],
+
     admin: [
+        // ❌ เอา survey_by_id และ surveyDate ออก
         { name: 'projectName', label: 'ชื่อโครงการ', type: 'text' },
         { name: 'location_id', label: 'สถานที่', type: 'select', source: 'locations' },
         { name: 'project_manager_id', label: 'ผู้บริหารโครงการ', type: 'select', source: 'employees' },
-        { name: 'survey_by_id', label: 'ผู้กรอก (สำรวจ)', type: 'select', source: 'employees' },
+        
         { name: 'design_owner_id', label: 'ผู้กรอก (ออกแบบ)', type: 'select', source: 'employees' },
         { name: 'bidding_owner_id', label: 'ผู้กรอก (ประมูล)', type: 'select', source: 'employees' },
         { name: 'pm_owenr_id', label: 'ผู้กรอก (PM)', type: 'select', source: 'employees' },
+        
         { name: 'budget', label: 'งบประมาณ', type: 'number' },
         { name: 'actualCost', label: 'ราคาก่อสร้างจริง', type: 'number' },
         { name: 'constructionType', label: 'ประเภทการก่อสร้าง', type: 'select', options: [
@@ -117,9 +112,9 @@ export const fieldsByTeam = {
             'โครงการปรุงงานก่อสร้าง',
             'งานเพิ่ม/ลด จากสัญญาก่อสร้างเดิม'
         ]},
-        { name: 'surveyStartDate', label: 'วันเริ่มงานก่อสร้าง', type: 'date' },
-        { name: 'surveyEndDate', label: 'วันจบงานก่อสร้าง', type: 'date' },
-        { name: 'isBudgetEstimated', label: 'ขอบเขต: ประเมินงบประมาณ', type: 'checkbox' },
+        
+        { name: 'quotationPDF', label: 'ใบเสนอราคา (.pdf)', type: 'file', accept: '.pdf' }, // ✅ เพิ่มให้ Admin เห็นใบเสนอราคา
+
         { name: 'workScopeDesign', label: 'ขอบเขต: ออกแบบ', type: 'checkbox' },
         { name: 'workScopeBidding', label: 'ขอบเขต: ประมูล', type: 'checkbox' },
         { name: 'workScopePM', label: 'ขอบเขต: บริหารโครงการ', type: 'checkbox' },
@@ -145,7 +140,7 @@ export const fieldsByTeam = {
         { name: 'boqPDF', label: `BOQ (.pdf)`, type: 'file', accept: '.pdf' },
         { name: 'projectImage', label: `รูปภาพโครงการ (3D Render)`, type: 'file', accept: 'image/*' },
 
-        // PM Fields (New)
+        // PM Fields
         { name: 'permissionDocsPDF', label: `เอกสารขออนุญาต (.pdf)`, type: 'file', accept: '.pdf' },
         { name: 'weeklyReportPDF', label: `รายงานประชุม (.pdf)`, type: 'file', accept: '.pdf' },
         { name: 'approvalDocsPDF', label: `เอกสารขออนุมัติ (.pdf)`, type: 'file', accept: '.pdf' },

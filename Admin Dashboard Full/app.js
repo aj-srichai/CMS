@@ -44,12 +44,12 @@ function showError(msg) {
 async function fetchProjects() {
     showLoading();
     
+    // โค้ดที่ถูกต้อง (สะอาดๆ ไม่มีคอมเมนต์ภาษาไทยปน)
     const { data, error } = await supabaseClient
         .from(config.PROJECT_TABLE)
         .select(`
             *,
             Location:Location!Projects_location_id_fkey (id, site_name),
-            Surveyor:Employees!Projects_survey_by_id_fkey (EmployeeID, FirstName, LastName),
             ProjectManager:Employees!Projects_project_manager_id_fkey (EmployeeID, FirstName, LastName),
             DesignOwner:Employees!Projects_design_owner_id_fkey (EmployeeID, FirstName, LastName),
             BiddingOwner:Employees!Projects_bidding_owner_id_fkey (EmployeeID, FirstName, LastName),
@@ -182,10 +182,21 @@ async function handleSave(actionType = 'save') {
 
     // ⭐️ V 2.4: ตรวจสอบ Checkbox ทีม Survey (รวม isBudgetEstimated เข้าไปในเงื่อนไข)
     if (currentRole === 'survey' && actionType === 'forward') {
-        const { isBudgetEstimated, workScopeDesign, workScopeBidding, workScopePM } = dataToUpdate;
-        if (!isBudgetEstimated && !workScopeDesign && !workScopeBidding && !workScopePM) {
-            showError('กรุณาเลือกขอบเขตงานอย่างน้อย 1 รายการ');
-            hasError = true;
+        // ดึงค่า Budget จาก input โดยตรง (กันเหนียว)
+        const budgetInput = document.getElementById('budget');
+        const budgetValue = parseFloat(budgetInput?.value || 0);
+
+        // ถ้าไม่มีงบ หรือ งบ <= 0 -> ห้ามส่งต่อ!
+        if (budgetValue <= 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ไม่สามารถส่งต่อได้',
+                text: 'โครงการนี้ยังไม่มี "งบประมาณ" (Budget) หรือระบุเป็น 0 บาท\n\nระบบป้องกันการส่งงานที่ไม่มีงบไปให้ทีมออกแบบตามนโยบายครับ',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'เข้าใจแล้ว'
+            });
+            hideLoading();
+            return; // ⛔️ จบการทำงานทันที ไม่บันทึก ไม่ส่ง
         }
     }
 
@@ -197,13 +208,29 @@ async function handleSave(actionType = 'save') {
         
         // ลบ object ที่ join มา
         delete projectData.Location;
-        delete projectData.Surveyor;
         delete projectData.ProjectManager;
         delete projectData.DesignOwner;
         delete projectData.BiddingOwner;
         delete projectData.PMOwner;
         
         Object.assign(projectData, dataToUpdate);
+
+        if (currentRole === 'admin' && isNewProject) {
+            // เช็คก่อนว่ามีวงเล็บอยู่แล้วหรือยัง (กันเบิ้ล)
+            if (projectData.projectName && !projectData.projectName.includes('(กรอกแทน)')) {
+                projectData.projectName = `${projectData.projectName} (กรอกแทน)`;
+            }
+        }
+
+        // ⭐️ CMS-03: Auto-Assign Design Team (พี่นิว/พี่เท้ง)
+        // ถ้าทีม Survey เป็นคนส่งต่องาน (Forward) -> ระบบยัดเยียดงานให้พี่นิว/พี่เท้งทันที
+        if (currentRole === 'survey' && actionType === 'forward') {
+             // ✅ ล็อค ID พี่เท้ง (113) คนเดียวเลย
+             const assignedId = 113; 
+             
+             projectData.design_owner_id = assignedId;
+             console.log('Auto-assigned to Design Team (Fixed): พี่เท้ง (ID 113)');
+        }
 
         const projectName = isNewProject ? projectData.projectName : (editingProject.projectName || projectData.projectName);
         if (!projectName) {
@@ -226,10 +253,8 @@ async function handleSave(actionType = 'save') {
         // ⭐️ V 2.3: Status Transition Logic (แยกตาม Action)
         // 1. ถ้าเป็นโปรเจกต์ใหม่ ให้สถานะเริ่มต้นเป็น role ปัจจุบัน (เช่น 'survey')
         if (isNewProject) {
-             // ถ้าแอดมินสร้าง ให้เป็น design หรือตามที่เลือก (ในอนาคต) แต่ตอนนี้ default design
-             // ถ้า Survey สร้าง ให้เป็น 'survey' เพื่อให้เห็นในหน้าตัวเองก่อน
-            projectData.status = currentRole === 'admin' ? 'design' : currentRole;
-        }
+             projectData.status = 'design'; 
+}
 
         // 2. จัดการการเปลี่ยนสถานะ
         if (currentRole !== 'admin') {
@@ -361,7 +386,7 @@ function renderForm() {
     
     // 1. เตรียม HTML สำหรับ Stepper (Timeline)
     const steps = [
-        { key: 'survey', label: '1. สำรวจ' },
+        // { key: 'survey', label: '1. สำรวจ' },
         { key: 'design', label: '2. ออกแบบ' },
         { key: 'bidding', label: '3. ประมูล' },
         { key: 'pm', label: '4. บริหารโครงการ' },
@@ -660,7 +685,7 @@ function renderTable() {
 
 const getEmployeeName = (empObj) => empObj ? `${empObj.FirstName} ${empObj.LastName || ''}`.trim() : '-';
 const getPM = (p) => getEmployeeName(p.ProjectManager);
-const getSurveyor = (p) => getEmployeeName(p.Surveyor);
+const getSurveyor = (p) => '-';
 const getLocation = (p) => p.Location ? p.Location.site_name : '-';
 const getDesignOwner = (p) => getEmployeeName(p.DesignOwner);
 const getBiddingOwner = (p) => getEmployeeName(p.BiddingOwner);

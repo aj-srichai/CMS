@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการโครงการ - CPF (v2.3)</title>
+    <title>ระบบจัดการโครงการ - CPF (v2.4)</title>
     
     <link rel="icon" href="cpf-logo.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,13 +24,12 @@
             z-index: 50 !important;
         }
         
-        /* ⭐️ แก้ไขตรงนี้: ให้ Canvas อยู่เหนือ Hybrid-bg */
         #particleCanvas {
-            z-index: -1 !important; /* Particle Canvas อยู่บนสุดของพื้นหลัง */
+            z-index: -1 !important; 
             pointer-events: none !important;
         }
         .hybrid-bg, .blob, .watermark {
-            z-index: -2 !important; /* Hybrid-bg (Blob & Watermark) อยู่ล่างสุด */
+            z-index: -2 !important; 
             pointer-events: none !important;
         }
         #loading { z-index: 9999; }
@@ -54,7 +53,7 @@
                 ระบบจัดการโครงการ
             </h1>
             <p style="color: #64748b; font-size: 0.85rem; margin-top: 0; padding-left: 4px;">
-                Construction Project Dashboard — CPF (v2.3)
+                Construction Project Dashboard — CPF (v2.4)
             </p>
         </div>
         <a href="index.html" class="btn btn-gray" style="text-decoration:none; font-size:0.9rem;">
@@ -71,16 +70,19 @@
                 <label style="margin-right: 0.5rem;">มุมมอง:</label>
                 <select id="roleSelect" onchange="window.App.changeRole(this.value)">
                     <option value="admin">แอดมิน</option>
-                    <option value="survey">ทีมสำรวจโครงการ</option>
                     <option value="design">ทีมออกแบบ</option>
                     <option value="bidding">ทีมประมูล</option>
                     <option value="pm">ทีมบริหารโครงการ</option>
                 </select>
             </div>
             
-            <div id="addBtnContainer">
+            <div id="addBtnContainer" style="display:flex; gap:10px;">
+                <a href="quotation.html" class="btn btn-gold" style="text-decoration:none; background: linear-gradient(135deg, #0f766e, #115e59); border:none;">
+                    <i class="fas fa-file-invoice-dollar"></i> สร้างใบเสนอราคา
+                </a>
+
                 <button class="btn btn-gold" onclick="window.App.toggleForm()" id="addBtn">
-                    <i class="fas fa-plus"></i> เพิ่มโครงการใหม่
+                    <i class="fas fa-plus"></i> เพิ่มโครงการ (Manual)
                 </button>
             </div>
         </div>
@@ -113,25 +115,6 @@
     <script type="module" src="app.js"></script>
     
     <script>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loading');
-                if (loader) {
-                    loader.style.display = 'none';
-                    loader.style.pointerEvents = 'none';
-                    loader.style.zIndex = '-9999';
-                    console.log('Safety Cut: Force removed loading screen.');
-                }
-            }, 1500);
-        });
-    </script>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="app.js"></script>
-    
-    <script>
-        // ... โค้ด Safety Cut เดิม ...
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const loader = document.getElementById('loading');
