@@ -25,7 +25,6 @@
             align-items: flex-start;
         }
 
-        /* Toolbar */
         .toolbar {
             position: fixed; top: 0; left: 0; right: 0; height: 70px;
             background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -51,86 +50,45 @@
 
         .ts-control { border: 1px solid #d4af37 !important; color: #78350f; font-weight: bold; }
 
-        /* ✅ Wrapper: ปกติให้จัดกลาง แต่ตอนปริ้นท์เราจะคุมด้วย JS อีกที */
         #paper-wrapper {
-            width: 210mm;
-            margin: 0 auto 50px auto;
-            position: relative;
-            transition: all 0.3s; /* ใส่ Effect ให้ดูนุ่มนวลตอนดีดไปซ้าย */
+            width: 210mm; margin: 0 auto 50px auto; position: relative;
+            transition: all 0.3s;
         }
 
-        /* ✅ A4 Paper */
         #invoice-paper {
-            background: white; 
-            width: 210mm; 
-            min-height: 297mm;
-            padding: 10mm 12mm;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-            color: #000; 
-            font-size: 10.5pt; 
-            line-height: 1.15;
-            position: relative;
-            margin: 0;
+            background: white; width: 210mm; min-height: 297mm;
+            padding: 10mm 12mm; box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            color: #000; font-size: 10.5pt; line-height: 1.15;
+            position: relative; margin: 0;
         }
 
-        /* Table Layout */
         table.layout-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
         table.layout-table td { vertical-align: top; padding: 1px 0; }
         
-        /* Input Style */
         input.paper-input, textarea.paper-input {
-            border: 1px dashed #cbd5e1; 
-            background: #fffef8 !important;
-            font-family: 'Sarabun', sans-serif; 
-            font-size: 10pt; 
-            color: #000 !important;
-            font-weight: 600;
-            padding: 2px 5px; 
-            width: 100%; 
-            border-radius: 0; 
-            resize: none; 
-            overflow: hidden;
+            border: 1px dashed #cbd5e1; background: #fffef8 !important;
+            font-family: 'Sarabun', sans-serif; font-size: 10pt; color: #000 !important;
+            font-weight: 600; padding: 2px 5px; width: 100%; border-radius: 0; 
+            resize: none; overflow: hidden;
         }
         input.paper-input:focus { 
-            border: 1px solid #d4af37; 
-            background: #fffce0 !important;
-            outline: none; 
+            border: 1px solid #d4af37; background: #fffce0 !important; outline: none; 
         }
         
-        /* สีเฉพาะ input บนหน้าเว็บ */
         #inpProjectName { color: #0f766e !important; font-weight: bold; }
         #inpDisc { color: #d4af37 !important; font-weight: bold; }
-
         input.text-right { text-align: right; }
         input.text-center { text-align: center; }
         input.font-bold { font-weight: bold; }
-        
-        input.input-discount {
-            border-bottom: 2px solid #666 !important;
-            color: #d4af37 !important;
-            font-weight: 700 !important;
-        }
-
+        input.input-discount { border-bottom: 2px solid #666 !important; color: #d4af37 !important; font-weight: 700 !important; }
         .logo-img { height: 42px; margin-right: 8px; }
 
-        /* Data Table */
-        table.data-table { 
-            width: 100%; border-collapse: collapse; margin-top: 5px;
-        }
-        table.data-table th { 
-            border: 1px solid #000; background: #e5e7eb; 
-            padding: 4px; font-size: 9.5pt; text-align: center; 
-        }
-        table.data-table td { 
-            border: 1px solid #000; padding: 4px; 
-            vertical-align: top; font-size: 9.5pt; 
-        }
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        table.data-table th { border: 1px solid #000; background: #e5e7eb; padding: 4px; font-size: 9.5pt; text-align: center; }
+        table.data-table td { border: 1px solid #000; padding: 4px; vertical-align: top; font-size: 9.5pt; }
+        .customer-box { border: 1px solid #000; padding: 6px; margin-bottom: 6px; }
 
-        .customer-box {
-            border: 1px solid #000; padding: 6px; margin-bottom: 6px;
-        }
-
-        /* --- [NEW] Sign Modal Styles --- */
+        /* Modal Styles */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2000;
@@ -145,17 +103,12 @@
         }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* ✅ Print / PDF Mode */
         @media print {
             @page { size: A4; margin: 0; }
             body, html { margin: 0; padding: 0; background: white; }
             .toolbar, .modal-overlay { display: none !important; }
             #paper-wrapper { width: 100%; margin: 0; padding: 0; }
-            #invoice-paper { 
-                width: 210mm; min-height: 297mm; 
-                margin: 0; padding: 10mm 12mm; 
-                box-shadow: none; border: none; 
-            }
+            #invoice-paper { width: 210mm; min-height: 297mm; margin: 0; padding: 10mm 12mm; box-shadow: none; border: none; }
         }
     </style>
 </head>
@@ -163,27 +116,25 @@
 
     <div class="toolbar">
         <div class="search-wrapper">
-            <span style="font-weight:800; color:#92400e;">
-                <i class="fas fa-search" style="color:#d4af37;"></i> ค้นหาลูกค้า:
-            </span>
+            <span style="font-weight:800; color:#92400e;"><i class="fas fa-search" style="color:#d4af37;"></i> ค้นหาลูกค้า:</span>
             <div style="width:300px;"><select id="selCustomer"></select></div>
         </div>
         <div style="width:1px; height:30px; background:#ddd; margin:0 15px;"></div>
-        <button class="btn-action btn-new" onclick="clearCustomer()">
-            <i class="fas fa-user-plus"></i> ล้างข้อมูล
+        <button class="btn-action btn-new" onclick="clearCustomer()"><i class="fas fa-user-plus"></i> ล้างข้อมูล</button>
+        <button class="btn-action" onclick="openSignModal()"><i class="fas fa-save"></i> บันทึก & สร้าง PDF</button>
+        <button class="btn-action" id="btnSave" onclick="openSignModal()"><i class="fas fa-save"></i> บันทึก & สร้าง PDF</button>
+        
+        <button class="btn-action" id="btnCustomerSign" onclick="openSignModal()" style="display:none; background:#d97706;">
+            <i class="fas fa-file-signature"></i> ลงนามอนุมัติ (ลูกค้า)
         </button>
-        <button class="btn-action" onclick="openSignModal()">
-            <i class="fas fa-save"></i> บันทึก & สร้าง PDF
-        </button>
-        <a href="index.html" class="btn-action btn-back" style="text-decoration:none;">
-            <i class="fas fa-times"></i> กลับหน้าหลัก
-        </a>
+        <a href="admin.html" class="btn-action btn-back" style="text-decoration:none;"><i class="fas fa-times"></i> กลับหน้าหลัก</a>
     </div>
 
     <div id="signModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#0f3d33;">✍️ ลงนามผู้จัดทำ (Prepared By)</h3>
-            <p style="color:#666; font-size:0.9rem;">กรุณาเซ็นชื่อเพื่อยืนยันการสร้างใบเสนอราคา</p>
+            <h3 style="margin-top:0; color:#0f3d33;" id="modalTitle">✍️ ลงนามผู้จัดทำ (Prepared By)</h3>
+            
+            <p style="color:#666; font-size:0.9rem;" id="modalDesc">กรุณาเซ็นชื่อเพื่อยืนยันการสร้างใบเสนอราคา</p>
             
             <div style="border: 2px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; margin: 15px 0; position: relative;">
                 <canvas id="canvasPrepared" width="380" height="200" style="width:100%; touch-action:none; cursor: crosshair;"></canvas>
@@ -194,6 +145,7 @@
                 <button onclick="clearPreparedSign()" class="btn-action" style="background:#f1f5f9; color:#333; flex:1; justify-content:center;">ล้าง</button>
                 <button onclick="closeSignModal()" class="btn-action" style="background:#f1f5f9; color:#333; flex:1; justify-content:center;">ยกเลิก</button>
             </div>
+            
             <button onclick="confirmSave()" class="btn-action" style="width:100%; margin-top:10px; justify-content: center; background: linear-gradient(135deg, #0f766e, #115e59);">
                 <i class="fas fa-check-circle"></i> ยืนยันและบันทึก
             </button>
@@ -202,7 +154,6 @@
 
     <div id="paper-wrapper">
         <div id="invoice-paper">
-            
             <table class="layout-table">
                 <tr>
                     <td style="width: 60%;">
@@ -214,33 +165,16 @@
                         <div style="font-size:9pt; font-weight:bold;">CPF (Thailand) Public Company Limited</div>
                         <div style="font-size:8.5pt; line-height:1.25;">
                             57 หมู่ที่ 5 ถนนพหลโยธิน ตำบลหนองไข่น้ำ อำเภอหนองแค<br>
-                            จังหวัดสระบุรี 18140 (สำนักงานใหญ่)<br>
-                            เลขประจำตัวผู้เสียภาษี (Tax ID): 0107555000023
+                            จังหวัดสระบุรี 18140 (สำนักงานใหญ่) เลขประจำตัวผู้เสียภาษี (Tax ID): 0107555000023
                         </div>
                     </td>
                     <td style="width: 40%; text-align: right; vertical-align: top;">
                         <div style="font-size:17pt; font-weight:bold;">QUOTATION</div>
                         <div style="font-size:11pt; font-weight:bold; margin-bottom:8px;">ใบเสนอราคา</div>
-                        
                         <table style="width:100%; font-size:9.5pt;">
-                            <tr>
-                                <td style="text-align:left; font-weight:bold; padding:2px 0;">Date / วันที่:</td>
-                                <td style="padding:2px 0;">
-                                    <input type="date" id="inpDate" class="paper-input text-right">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="text-align:left; font-weight:bold; padding:2px 0;">Quotation No.:</td>
-                                <td style="padding:2px 0;">
-                                    <input type="text" id="inpQuoteNo" class="paper-input text-right font-bold" placeholder="QT-XXXX">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="text-align:left; font-weight:bold; padding:2px 0;">Ref ID:</td>
-                                <td style="text-align:right; padding:2px 0;">
-                                    <span id="sysRefID" style="color:#888;">-</span>
-                                </td>
-                            </tr>
+                            <tr><td style="text-align:left; font-weight:bold;">Date / วันที่:</td><td><input type="date" id="inpDate" class="paper-input text-right"></td></tr>
+                            <tr><td style="text-align:left; font-weight:bold;">Quotation No.:</td><td><input type="text" id="inpQuoteNo" class="paper-input text-right font-bold" placeholder="QT-XXXX"></td></tr>
+                            <tr><td style="text-align:left; font-weight:bold;">Ref ID:</td><td style="text-align:right;"><span id="sysRefID" style="color:#888;">-</span></td></tr>
                         </table>
                     </td>
                 </tr>
@@ -248,91 +182,32 @@
 
             <div class="customer-box">
                 <table class="layout-table" style="font-size:9.5pt; margin:0;">
-                    <tr>
-                        <td colspan="2" style="font-weight:bold; text-decoration:underline; padding-bottom:3px;">
-                            Quotation to / ผู้รับใบเสนอราคา:
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width: 15%; font-weight:bold; padding:1px 0;">Name:</td>
-                        <td style="width: 85%; padding:1px 0;">
-                            <input type="text" id="inpContactName" class="paper-input" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ...">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold; padding:1px 0;">Company:</td>
-                        <td style="padding:1px 0;">
-                            <input type="text" id="inpCusName" class="paper-input" placeholder="ชื่อบริษัท...">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold; padding:1px 0;">Address:</td>
-                        <td style="padding:1px 0;">
-                            <input type="text" id="inpCusAddr" class="paper-input" placeholder="ที่อยู่...">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold; padding:1px 0;">Phone:</td>
-                        <td style="padding:1px 0;">
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="text" id="inpCusPhone" class="paper-input" placeholder="เบอร์โทร..." style="flex:1;">
-                                <span style="font-weight:bold; white-space:nowrap;">E-mail:</span>
-                                <input type="text" id="inpCusEmail" class="paper-input" placeholder="อีเมล..." style="flex:1;">
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold; padding:1px 0;">Tax ID No.:</td>
-                        <td style="padding:1px 0;">
-                            <input type="text" id="inpCusTax" class="paper-input" placeholder="เลขประจำตัวผู้เสียภาษี...">
-                        </td>
-                    </tr>
+                    <tr><td colspan="2" style="font-weight:bold; text-decoration:underline;">Quotation to / ผู้รับใบเสนอราคา:</td></tr>
+                    <tr><td style="width: 15%; font-weight:bold;">Name:</td><td style="width: 85%;"><input type="text" id="inpContactName" class="paper-input" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ..."></td></tr>
+                    <tr><td style="font-weight:bold;">Company:</td><td><input type="text" id="inpCusName" class="paper-input" placeholder="ชื่อบริษัท..."></td></tr>
+                    <tr><td style="font-weight:bold;">Address:</td><td><input type="text" id="inpCusAddr" class="paper-input" placeholder="ที่อยู่..."></td></tr>
+                    <tr><td style="font-weight:bold;">Phone:</td><td><div style="display:flex; gap:8px;"><input type="text" id="inpCusPhone" class="paper-input" placeholder="เบอร์โทร..." style="flex:1;"><span style="font-weight:bold;">E-mail:</span><input type="text" id="inpCusEmail" class="paper-input" placeholder="อีเมล..." style="flex:1;"></div></td></tr>
+                    <tr><td style="font-weight:bold;">Tax ID No.:</td><td><input type="text" id="inpCusTax" class="paper-input" placeholder="เลขประจำตัวผู้เสียภาษี..."></td></tr>
                 </table>
             </div>
 
             <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width:8%">No.</th>
-                        <th style="width:50%">Description / รายละเอียด</th>
-                        <th style="width:15%">Unit Price</th>
-                        <th style="width:10%">Qty</th>
-                        <th style="width:17%">Amount (THB)</th>
-                    </tr>
-                </thead>
+                <thead><tr><th style="width:8%">No.</th><th style="width:50%">Description / รายละเอียด</th><th style="width:15%">Unit Price</th><th style="width:10%">Qty</th><th style="width:17%">Amount (THB)</th></tr></thead>
                 <tbody>
                     <tr>
                         <td style="text-align:center;">1</td>
                         <td>
-                            <input type="text" class="paper-input font-bold" 
-                                   value="ค่าบริการที่ปรึกษาโครงการก่อสร้างครบวงจร" 
-                                   style="font-size:9.5pt;">
+                            <input type="text" class="paper-input font-bold" value="ค่าบริการที่ปรึกษาโครงการก่อสร้างครบวงจร">
                             <div style="display:flex; align-items:center; gap:5px; font-size:8.5pt; margin-top:2px;">
                                 <span style="white-space:nowrap;">Project:</span>
-                                <input type="text" id="inpProjectName" class="paper-input" 
-                                       placeholder="ระบุชื่อโครงการ..." 
-                                       style="font-size:9pt;">
+                                <input type="text" id="inpProjectName" class="paper-input" placeholder="ระบุชื่อโครงการ...">
                             </div>
-                            <div style="margin-top:2px; font-size:8.5pt; color:#444;">
-                                * From Construction Cost: 
-                                <input type="number" id="inpCost" class="paper-input text-center" 
-                                       style="width:75px; display:inline-block; font-size:9pt;" 
-                                       placeholder="0" oninput="calc()"> THB
-                            </div>
-                            <div style="font-size:8.5pt; color:#444;">
-                                * Fee Rate: 
-                                <input type="number" id="inpRate" class="paper-input text-center" 
-                                       style="width:35px; display:inline-block; font-size:9pt;" 
-                                       value="3" oninput="calc()"> %
-                            </div>
+                            <div style="margin-top:2px; font-size:8.5pt; color:#444;">* From Cost: <input type="number" id="inpCost" class="paper-input text-center" style="width:75px; display:inline-block;" placeholder="0" oninput="calc()"> THB</div>
+                            <div style="font-size:8.5pt; color:#444;">* Fee Rate: <input type="number" id="inpRate" class="paper-input text-center" style="width:35px; display:inline-block;" value="3" oninput="calc()"> %</div>
                         </td>
-                        <td style="text-align:right;"><span id="outUnitPrice">0.00</span></td>
-                        <td style="text-align:center;">1</td>
-                        <td style="text-align:right; font-weight:bold;"><span id="outAmount">0.00</span></td>
+                        <td style="text-align:right;"><span id="outUnitPrice">0.00</span></td><td style="text-align:center;">1</td><td style="text-align:right; font-weight:bold;"><span id="outAmount">0.00</span></td>
                     </tr>
-                    <tr>
-                        <td colspan="5" style="height: 180px; border:1px solid #000; border-top:none;">&nbsp;</td>
-                    </tr>
+                    <tr><td colspan="5" style="height: 180px; border:1px solid #000; border-top:none;">&nbsp;</td></tr>
                 </tbody>
             </table>
 
@@ -342,49 +217,19 @@
                         <div style="border:1px solid #ccc; padding:8px; font-size:8.5pt; height:100%;">
                             <b>Terms and Conditions:</b>
                             <ol style="padding-left: 18px; margin: 4px 0; line-height:1.3;">
-                                <li>Please specify the delivery location in advance.<br>(โปรดแจ้งสถานที่จัดส่งล่วงหน้า)</li>
-                                <li>Payment Terms: 30 Days Credit.<br>(เครดิตการชำระเงิน 30 วัน)</li>
-                                <li>Delivery within 30 days after receiving PO.<br>(ส่งมอบภายใน 30 วันหลังได้รับใบสั่งซื้อ)</li>
+                                <li>Please specify the delivery location in advance.</li>
+                                <li>Payment Terms: 30 Days Credit.</li>
+                                <li>Delivery within 30 days after receiving PO.</li>
                             </ol>
                         </div>
                     </td>
                     <td style="width: 42%; vertical-align: top;">
                         <table style="width:100%; font-size:9.5pt; border-collapse:collapse;">
-                            <tr>
-                                <td style="padding:2px 5px;">Subtotal:</td>
-                                <td style="text-align:right; font-weight:bold; padding:2px 5px;">
-                                    <span id="valSubtotal">0.00</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:2px 5px;">
-                                    Discount (<input type="number" id="inpDisc" 
-                                                     class="paper-input text-center input-discount" 
-                                                     style="width:50px; display:inline-block; font-size:10pt;" 
-                                                     value="0" oninput="calc()">%):
-                                </td>
-                                <td style="text-align:right; padding:2px 5px;">
-                                    <span id="valDiscount">0.00</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:2px 5px;">After Discount:</td>
-                                <td style="text-align:right; padding:2px 5px;">
-                                    <span id="valAfterDisc">0.00</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:2px 5px;">VAT 7%:</td>
-                                <td style="text-align:right; padding:2px 5px;">
-                                    <span id="valVat">0.00</span>
-                                </td>
-                            </tr>
-                            <tr style="background:#f3f4f6; border-top:1px solid #000; border-bottom:3px double #000;">
-                                <td style="padding:5px; font-weight:bold;">Grand Total:</td>
-                                <td style="padding:5px; text-align:right; font-weight:bold; font-size:10.5pt;">
-                                    <span id="valGrandTotal">0.00</span>
-                                </td>
-                            </tr>
+                            <tr><td style="padding:2px 5px;">Subtotal:</td><td style="text-align:right; font-weight:bold; padding:2px 5px;"><span id="valSubtotal">0.00</span></td></tr>
+                            <tr><td style="padding:2px 5px;">Discount (<input type="number" id="inpDisc" class="paper-input text-center input-discount" style="width:50px; display:inline-block;" value="0" oninput="calc()">%):</td><td style="text-align:right; padding:2px 5px;"><span id="valDiscount">0.00</span></td></tr>
+                            <tr><td style="padding:2px 5px;">After Discount:</td><td style="text-align:right; padding:2px 5px;"><span id="valAfterDisc">0.00</span></td></tr>
+                            <tr><td style="padding:2px 5px;">VAT 7%:</td><td style="text-align:right; padding:2px 5px;"><span id="valVat">0.00</span></td></tr>
+                            <tr style="background:#f3f4f6; border-top:1px solid #000; border-bottom:3px double #000;"><td style="padding:5px; font-weight:bold;">Grand Total:</td><td style="padding:5px; text-align:right; font-weight:bold; font-size:10.5pt;"><span id="valGrandTotal">0.00</span></td></tr>
                         </table>
                     </td>
                 </tr>
@@ -393,42 +238,26 @@
             <table class="layout-table" style="margin-top:20px; text-align:center; font-size:9.5pt;">
                 <tr>
                     <td style="width:33%; vertical-align: bottom;">
-                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
-                            <img id="showSignPrepared" style="max-height: 50px; max-width: 100%; display: none;">
-                        </div>
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;"><img id="showSignPrepared" style="max-height: 50px; max-width: 100%; display: none;"></div>
                         <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
-                        <b>Prepared By</b><br>
-                        <span style="font-size:8.5pt;">(ผู้จัดทำ)</span><br>
-                        <span style="font-size:8.5pt;">Date: <span id="datePrepared"></span></span>
+                        <b>Prepared By</b><br><span style="font-size:8.5pt;">(ผู้จัดทำ)</span><br><span style="font-size:8.5pt;">Date: <span id="datePrepared"></span></span>
                     </td>
-
                     <td style="width:33%; vertical-align: bottom;">
-                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
-                            <img id="showSignReview" style="max-height: 50px; max-width: 100%; display: none;">
-                        </div>
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;"><img id="showSignReview" style="max-height: 50px; max-width: 100%; display: none;"></div>
                         <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
-                        <b>Reviewed By</b><br>
-                        <span style="font-size:8.5pt;">(ผู้ตรวจสอบ)</span><br>
-                        <span style="font-size:8.5pt;">Date: <span id="dateReviewed">____/____/______</span></span>
+                        <b>Reviewed By</b><br><span style="font-size:8.5pt;">(ผู้ตรวจสอบ)</span><br><span style="font-size:8.5pt;">Date: <span id="dateReviewed">____/____/______</span></span>
                     </td>
-
                     <td style="width:33%; vertical-align: bottom;">
-                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
-                            <img id="showSignCustomer" style="max-height: 50px; max-width: 100%; display: none;">
-                        </div>
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;"><img id="showSignCustomer" style="max-height: 50px; max-width: 100%; display: none;"></div>
                         <div style="border-bottom:1px solid #000; width:80%; margin: 5px auto;"></div>
-                        <b>Accepted By</b><br>
-                        <span style="font-size:8.5pt;">(ลูกค้า/ผู้อนุมัติ)</span><br>
-                        <span style="font-size:8.5pt;">Date: <span id="dateCustomer">____/____/______</span></span>
+                        <b>Accepted By</b><br><span style="font-size:8.5pt;">(ลูกค้า/ผู้อนุมัติ)</span><br><span style="font-size:8.5pt;">Date: <span id="dateCustomer">____/____/______</span></span>
                     </td>
                 </tr>
             </table>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    
     <script type="module">
         import * as config from './config.js';
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -438,39 +267,61 @@
         let customerData = [];
         let padPrepared = null; 
 
-        // เช็คโหมด
+        // ✅ 1. รับค่าโหมดจาก URL (ต้องมีบรรทัด isCustomerMode)
         const urlParams = new URLSearchParams(window.location.search);
         const isInternal = urlParams.get('mode') === 'internal';
-        const paramId = urlParams.get('id'); // รับ ID มาเพื่อเปิดดู/พิมพ์
+        const isCustomerMode = urlParams.get('mode') === 'customer'; // <--- ตัวสำคัญ
+        const paramId = urlParams.get('id'); 
         const isPrintMode = urlParams.get('mode') === 'print';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // โหลดข้อมูลถ้ามี ID
             if (paramId) {
                 await loadExistingQuotation(paramId);
             } else {
                 await setupNewQuotation();
             }
-
-            // ถ้าเป็นโหมด Print ให้สั่งพิมพ์อัตโนมัติ
+            
             if (isPrintMode) {
                 setTimeout(() => window.print(), 1000);
             }
+
+            // ✅ 2. สั่งซ่อน/โชว์ปุ่ม ตามโหมด
+            if (isCustomerMode) {
+                // ซ่อนเครื่องมือ Admin
+                if(document.getElementById('searchBox')) document.getElementById('searchBox').style.display = 'none';
+                if(document.getElementById('divider1')) document.getElementById('divider1').style.display = 'none';
+                if(document.getElementById('btnClear')) document.getElementById('btnClear').style.display = 'none';
+                if(document.getElementById('btnSave')) document.getElementById('btnSave').style.display = 'none';
+                
+                // โชว์ปุ่มลูกค้า
+                if(document.getElementById('btnCustomerSign')) document.getElementById('btnCustomerSign').style.display = 'flex';
+
+                // ล็อกช่องกรอกข้อมูลทั้งหมด (Read-only)
+                document.querySelectorAll('input').forEach(i => i.disabled = true);
+            }
+            
             calc();
         });
 
-        // ฟังก์ชันเปิด Modal เซ็นชื่อ (แทนที่จะโชว์คาไว้ที่ Toolbar)
+        // ✅ 3. แก้ฟังก์ชันเปิด Modal (เปลี่ยนชื่อหัวข้อตามโหมด)
         window.openSignModal = function() {
-            let projName = document.getElementById('inpProjectName').value;
-            const cusName = document.getElementById('inpCusName').value;
-            
-            if(!projName || !cusName) { 
-                Swal.fire('ข้อมูลไม่ครบ', 'ระบุชื่อลูกค้าและชื่อโครงการ', 'warning'); return; 
+            // เช็คโหมดเพื่อเปลี่ยนข้อความ
+            if (isCustomerMode) {
+                document.getElementById('modalTitle').innerText = '✍️ ลงนามอนุมัติ (ลูกค้า)';
+                document.getElementById('modalDesc').innerText = 'กรุณาเซ็นชื่อเพื่อยืนยันการสั่งจ้าง';
+            } else {
+                document.getElementById('modalTitle').innerText = '✍️ ลงนามผู้จัดทำ (Prepared By)';
+                document.getElementById('modalDesc').innerText = 'กรุณาเซ็นชื่อเพื่อยืนยันการสร้างใบเสนอราคา';
+                
+                // ถ้าโหมดปกติ ต้องเช็คว่ากรอกชื่อครบไหม
+                let projName = document.getElementById('inpProjectName').value;
+                const cusName = document.getElementById('inpCusName').value;
+                if(!projName || !cusName) { Swal.fire('ข้อมูลไม่ครบ', 'ระบุชื่อลูกค้าและชื่อโครงการ', 'warning'); return; }
             }
-
+            
             document.getElementById('signModal').style.display = 'flex';
             
-            // Init Pad ถ้ายังไม่เคยสร้าง (ต้องรอ Modal แสดงก่อน Canvas ถึงจะมีขนาดจริง)
+            // Init Signature Pad
             if (!padPrepared) {
                 const canvas = document.getElementById('canvasPrepared');
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -480,77 +331,59 @@
                 padPrepared = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,0)', penColor:'rgb(0,0,0)' });
             }
         };
-
+        
+        // ✅ เพิ่มฟังก์ชันปิด Modal (ที่หายไป)
         window.closeSignModal = function() {
             document.getElementById('signModal').style.display = 'none';
         };
 
+        // ✅ เพิ่มฟังก์ชันล้างลายเซ็น (เผื่อหายด้วย)
         window.clearPreparedSign = function() {
             if (padPrepared) padPrepared.clear();
         };
 
-        // กดปุ่มยืนยันใน Modal -> ทำงานบันทึกจริง
-        window.confirmSave = function() {
-            if (!padPrepared || padPrepared.isEmpty()) {
-                Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนบันทึก', 'warning');
-                return;
-            }
+        // ✅ 4. แก้ปุ่มยืนยัน (ให้แยกว่าใครเซ็น)
+        window.confirmSave = () => {
+            if (!padPrepared || padPrepared.isEmpty()) { Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนบันทึก', 'warning'); return; }
             closeSignModal();
-            executeSave();
+            
+            if (isCustomerMode) {
+                saveCustomerSignature(); // <--- ถ้าลูกค้าเซ็น ไปเรียกฟังก์ชันลูกค้า
+            } else {
+                executeSave(); // <--- ถ้าเราเซ็น ไปเรียกฟังก์ชันเรา
+            }
         };
 
         async function setupNewQuotation() {
             document.getElementById('inpDate').valueAsDate = new Date();
             document.getElementById('datePrepared').innerText = new Date().toLocaleDateString('th-TH');
-
             const { count } = await supabaseApp.from(config.PROJECT_TABLE).select('*', { count: 'exact', head: true });
             const nextId = (count || 0) + 1;
             document.getElementById('sysRefID').innerText = `#${nextId}`;
-            
-            const year = new Date().getFullYear();
-            document.getElementById('inpQuoteNo').value = `QT-${year}-${String(nextId).padStart(4,'0')}`;
-
+            document.getElementById('inpQuoteNo').value = `QT-${new Date().getFullYear()}-${String(nextId).padStart(4,'0')}`;
             await loadCustomers();
         }
 
         async function loadExistingQuotation(id) {
-            const { data: proj, error } = await supabaseApp.from(config.PROJECT_TABLE).select('*').eq('id', id).single();
-            if (error || !proj) {
-                Swal.fire('Error', 'ไม่พบข้อมูลใบเสนอราคา', 'error');
-                return;
-            }
-
-            // เติมข้อมูลลง Input
+            const { data: proj } = await supabaseApp.from(config.PROJECT_TABLE).select('*').eq('id', id).single();
+            if (!proj) return;
             document.getElementById('inpProjectName').value = proj.projectName || '';
             document.getElementById('valGrandTotal').innerText = (proj.budget || 0).toLocaleString('th-TH', {minimumFractionDigits:2});
             
-            // 1. ผู้จัดทำ
             if (proj.prepared_sign) {
                 document.getElementById('showSignPrepared').src = proj.prepared_sign;
                 document.getElementById('showSignPrepared').style.display = 'block';
-                if(proj.created_at) {
-                    const d = new Date(proj.created_at);
-                    document.getElementById('datePrepared').innerText = d.toLocaleDateString('th-TH');
-                }
+                if(proj.created_at) document.getElementById('datePrepared').innerText = new Date(proj.created_at).toLocaleDateString('th-TH');
             }
-
-            // 2. ผู้ตรวจสอบ
             if (proj.approver_sign) {
                 document.getElementById('showSignReview').src = proj.approver_sign;
                 document.getElementById('showSignReview').style.display = 'block';
-                if(proj.approved_at) {
-                    const d = new Date(proj.approved_at);
-                    document.getElementById('dateReviewed').innerText = d.toLocaleDateString('th-TH');
-                }
+                if(proj.approved_at) document.getElementById('dateReviewed').innerText = new Date(proj.approved_at).toLocaleDateString('th-TH');
             }
-
-            // 3. ลูกค้า
             if (proj.customer_sign) {
                 document.getElementById('showSignCustomer').src = proj.customer_sign;
                 document.getElementById('showSignCustomer').style.display = 'block';
             }
-            
-            // ดึงข้อมูลลูกค้า
             if(proj.location_id) {
                  const { data: loc } = await supabaseApp.from(config.LOCATION_TABLE).select('*').eq('id', proj.location_id).single();
                  if(loc) {
@@ -564,14 +397,10 @@
         async function loadCustomers() {
             const { data } = await supabaseApp.from(config.LOCATION_TABLE).select('*');
             customerData = data || [];
-            const selectEl = document.getElementById('selCustomer');
-            if (selectEl && !tomSelect) {
+            if (!tomSelect) {
                 tomSelect = new TomSelect('#selCustomer', {
-                    options: customerData.map(c => ({
-                        value: c.id, text: c.site_name, address: c.address || '', tax_id: c.tax_id || ''
-                    })),
-                    valueField: 'value', labelField: 'text', searchField: ['text', 'address'],
-                    placeholder: 'พิมพ์ชื่อบริษัท...', maxOptions: 50,
+                    options: customerData.map(c => ({ value: c.id, text: c.site_name, address: c.address, tax_id: c.tax_id })),
+                    valueField: 'value', labelField: 'text', searchField: ['text'], placeholder: 'พิมพ์ชื่อบริษัท...', maxOptions: 50,
                     onChange: (val) => {
                         const found = customerData.find(c => c.id == val);
                         if(found) {
@@ -590,36 +419,29 @@
             const discP = parseFloat(document.getElementById('inpDisc').value) || 0;
             const fee = cost * (rate / 100);
             const discount = fee * (discP / 100);
-            const afterDisc = fee - discount;
-            const vat = afterDisc * 0.07;
-            const total = afterDisc + vat;
-            
+            const vat = (fee - discount) * 0.07;
+            const total = fee - discount + vat;
             const fmt = (n) => n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
             document.getElementById('outUnitPrice').innerText = fmt(fee);
             document.getElementById('outAmount').innerText = fmt(fee);
             document.getElementById('valSubtotal').innerText = fmt(fee);
             document.getElementById('valDiscount').innerText = fmt(discount);
-            document.getElementById('valAfterDisc').innerText = fmt(afterDisc);
+            document.getElementById('valAfterDisc').innerText = fmt(fee - discount);
             document.getElementById('valVat').innerText = fmt(vat);
             document.getElementById('valGrandTotal').innerText = fmt(total);
         };
 
-        // ฟังก์ชันบันทึกจริง (แยกออกมาเรียกหลัง Modal)
         async function executeSave() {
             let projName = document.getElementById('inpProjectName').value;
             const cusName = document.getElementById('inpCusName').value;
             const grandTotal = parseFloat(document.getElementById('valGrandTotal').innerText.replace(/,/g, ''));
 
-            if (isInternal && !projName.includes('(กรอกแทน)')) {
-                projName += ' (กรอกแทน)';
-                document.getElementById('inpProjectName').value = projName;
-            }
+            // ❌ ลบส่วนที่เติม (กรอกแทน) ออกไปแล้ว
+            // if (isInternal && !projName.includes('(กรอกแทน)')) { ... }
             
-            // เก็บ Signature จาก Modal
             let preparedSignData = null;
             if (padPrepared && !padPrepared.isEmpty()) {
                 preparedSignData = padPrepared.toDataURL();
-                // แปะลงกระดาษเพื่อ Gen PDF
                 document.getElementById('showSignPrepared').src = preparedSignData;
                 document.getElementById('showSignPrepared').style.display = 'block';
             }
@@ -629,9 +451,8 @@
             try {
                 let locId = tomSelect ? tomSelect.getValue() : null;
                 if(!locId) {
-                    const { data: newLoc, error: locErr } = await supabaseApp.from(config.LOCATION_TABLE)
+                    const { data: newLoc } = await supabaseApp.from(config.LOCATION_TABLE)
                         .insert([{ site_name: cusName, address: document.getElementById('inpCusAddr').value, tax_id: document.getElementById('inpCusTax').value }]).select().single();
-                    if(locErr) throw new Error(locErr.message);
                     locId = newLoc.id;
                 }
 
@@ -670,25 +491,51 @@
                 const { data: urlData } = supabaseApp.storage.from(config.BUCKET_NAME).getPublicUrl(`quotations/${fileName}`);
 
                 const { error: insertError } = await supabaseApp.from(config.PROJECT_TABLE).insert([{
-                projectName: projName, 
-                location_id: locId, 
-                budget: grandTotal, 
-                status: 'wait_for_approval', 
-                quotationPDF: urlData.publicUrl, 
-                constructionType: 'โครงการก่อร้างใหม่',
-                prepared_sign: preparedSignData,
-                prepared_by: 'Admin/Staff', 
-                created_at: new Date().toISOString()
-            }]);
+                    projectName: projName, 
+                    location_id: locId, 
+                    budget: grandTotal, 
+                    status: 'wait_for_approval', 
+                    quotationPDF: urlData.publicUrl, 
+                    constructionType: 'โครงการก่อร้างใหม่', 
+                    prepared_sign: preparedSignData, 
+                    prepared_by: 'Admin/Staff', 
+                    created_at: new Date().toISOString()
+                }]);
 
-            if (insertError) throw new Error("Database Insert Failed: " + insertError.message);
+                if (insertError) throw new Error(insertError.message);
 
-            Swal.fire('สำเร็จ!', 'บันทึกและส่งรออนุมัติเรียบร้อย', 'success').then(() => {
-                window.location.href = isInternal ? 'admin.html' : 'index.html';
-            });
+                Swal.fire('สำเร็จ!', 'บันทึกและส่งรออนุมัติเรียบร้อย', 'success').then(() => {
+                    window.location.href = isInternal ? 'admin.html' : 'index.html';
+                });
 
             } catch (err) {
-                console.error(err);
+                Swal.fire('Error', err.message, 'error');
+            }
+        }
+        // ฟังก์ชันบันทึกเฉพาะของลูกค้า (เปลี่ยนสถานะเป็น Design)
+        async function saveCustomerSignature() {
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const signatureData = padPrepared.toDataURL();
+                
+                const { error } = await supabaseApp
+                    .from(config.PROJECT_TABLE)
+                    .update({
+                        customer_sign: signatureData,
+                        status: 'design', // <--- ✅ เซ็นเสร็จ ส่งไปทีมออกแบบ
+                        customer_name: 'ลูกค้า (E-Sign)' 
+                    })
+                    .eq('id', paramId);
+
+                if (error) throw error;
+
+                // อัปเดตหน้าจอ
+                document.getElementById('showSignCustomer').src = signatureData;
+                document.getElementById('showSignCustomer').style.display = 'block';
+                document.getElementById('btnCustomerSign').style.display = 'none'; // ซ่อนปุ่มหลังเซ็นเสร็จ
+
+                Swal.fire('สำเร็จ', 'ขอบคุณที่ไว้วางใจเราครับ (ส่งงานเข้าสู่ขั้นตอนออกแบบ)', 'success');
+            } catch (err) {
                 Swal.fire('Error', err.message, 'error');
             }
         }

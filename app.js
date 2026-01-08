@@ -37,6 +37,18 @@ function showError(msg) {
         confirmButtonColor: '#d33',
         confirmButtonText: 'ตกลง'
     });
+
+}
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        Swal.fire({
+            icon: 'success', 
+            title: 'คัดลอกลิงก์แล้ว',
+            text: 'ส่งลิงก์นี้ให้ลูกค้าได้เลยครับ', 
+            timer: 1500, 
+            showConfirmButton: false
+        });
+    });
 }
 
 // -----------------------------------------------------------------
@@ -148,67 +160,33 @@ async function handleSave(actionType = 'save') {
     const isNewProject = !editingProject;
     const currentFields = config.fieldsByTeam[currentRole];
 
-    // --- Read data from form ---
     currentFields.forEach(field => {
         const input = form.querySelector(`#${field.name}`);
         if (!input) return;
 
         let value = null;
+        if (field.type === 'checkbox') value = input.checked;
+        else if (field.type === 'file') {} 
+        else if (field.type === 'select') value = input.value ? (field.source ? parseInt(input.value) : input.value) : null;
+        else value = input.value ? (field.type === 'number' ? parseFloat(input.value) : input.value) : null;
         
-        if (field.type === 'checkbox') {
-            value = input.checked;
-        } else if (field.type === 'file') {
-            // File logic handled later
-        } else if (field.type === 'select') {
-            value = input.value ? (field.source ? parseInt(input.value) : input.value) : null;
-        } else {
-            value = input.value ? (field.type === 'number' ? parseFloat(input.value) : input.value) : null;
-        }
+        if (field.type !== 'file') dataToUpdate[field.name] = value;
         
-        if (field.type !== 'file') {
-            dataToUpdate[field.name] = value;
-        }
-        
-        // --- Validation (ตรวจสอบเฉพาะเมื่อกดส่งต่อ หรือ ปิดโครงการ) ---
-        // ถ้ากดแค่ "บันทึก" (save) อาจจะยังกรอกไม่ครบก็ได้
         if ((actionType === 'forward' || actionType === 'complete') && field.required && !input.value && (!editingProject || !editingProject[field.name])) {
-            showError(`กรุณากรอกข้อมูลในช่อง "${field.label.split('(')[0].trim()}" ให้ครบถ้วนเพื่อดำเนินการต่อ`);
+            showError(`กรุณากรอก "${field.label.split('(')[0].trim()}"`);
             hasError = true;
         }
-        // ถ้าเป็นโปรเจกต์ใหม่ ต้องกรอกชื่อโครงการเสมอ
         if (isNewProject && field.name === 'projectName' && !input.value) {
             showError(`กรุณากรอกชื่อโครงการ`);
             hasError = true;
         }
     });
 
-    // ⭐️ V 2.4: ตรวจสอบ Checkbox ทีม Survey (รวม isBudgetEstimated เข้าไปในเงื่อนไข)
-    if (currentRole === 'survey' && actionType === 'forward') {
-        // ดึงค่า Budget จาก input โดยตรง (กันเหนียว)
-        const budgetInput = document.getElementById('budget');
-        const budgetValue = parseFloat(budgetInput?.value || 0);
-
-        // ถ้าไม่มีงบ หรือ งบ <= 0 -> ห้ามส่งต่อ!
-        if (budgetValue <= 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'ไม่สามารถส่งต่อได้',
-                text: 'โครงการนี้ยังไม่มี "งบประมาณ" (Budget) หรือระบุเป็น 0 บาท\n\nระบบป้องกันการส่งงานที่ไม่มีงบไปให้ทีมออกแบบตามนโยบายครับ',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'เข้าใจแล้ว'
-            });
-            hideLoading();
-            return; // ⛔️ จบการทำงานทันที ไม่บันทึก ไม่ส่ง
-        }
-    }
-
     if (hasError) return;
     
     showLoading();
     try {
         let projectData = isNewProject ? {} : { ...editingProject };
-        
-        // ลบ object ที่ join มา
         delete projectData.Location;
         delete projectData.ProjectManager;
         delete projectData.DesignOwner;
@@ -217,31 +195,11 @@ async function handleSave(actionType = 'save') {
         
         Object.assign(projectData, dataToUpdate);
 
-        if (currentRole === 'admin' && isNewProject) {
-            // เช็คก่อนว่ามีวงเล็บอยู่แล้วหรือยัง (กันเบิ้ล)
-            if (projectData.projectName && !projectData.projectName.includes('(กรอกแทน)')) {
-                projectData.projectName = `${projectData.projectName} (กรอกแทน)`;
-            }
-        }
-
-        // ⭐️ CMS-03: Auto-Assign Design Team (พี่นิว/พี่เท้ง)
-        // ถ้าทีม Survey เป็นคนส่งต่องาน (Forward) -> ระบบยัดเยียดงานให้พี่นิว/พี่เท้งทันที
-        if (currentRole === 'survey' && actionType === 'forward') {
-             // ✅ ล็อค ID พี่เท้ง (113) คนเดียวเลย
-             const assignedId = 113; 
-             
-             projectData.design_owner_id = assignedId;
-             console.log('Auto-assigned to Design Team (Fixed): พี่เท้ง (ID 113)');
-        }
+        // ❌ ลบส่วนที่เติม (กรอกแทน) ออกไปแล้ว
+        // if (currentRole === 'admin' && isNewProject) { ... }
 
         const projectName = isNewProject ? projectData.projectName : (editingProject.projectName || projectData.projectName);
-        if (!projectName) {
-            showError(`ไม่สามารถหาชื่อโครงการได้`);
-            hideLoading();
-            return;
-        }
         
-        // --- Handle File Uploads ---
         for (const field of currentFields) {
             if (field.type === 'file') {
                 if (fileInputs[field.name]) {
@@ -252,44 +210,25 @@ async function handleSave(actionType = 'save') {
             }
         }
         
-        // ⭐️ V 2.3: Status Transition Logic (แยกตาม Action)
-        // 1. ถ้าเป็นโปรเจกต์ใหม่ ให้สถานะเริ่มต้นเป็น role ปัจจุบัน (เช่น 'survey')
-        if (isNewProject) {
-             projectData.status = 'design'; 
-}
+        if (isNewProject) projectData.status = 'design'; 
 
-        // 2. จัดการการเปลี่ยนสถานะ
         if (currentRole !== 'admin') {
-            const currentStatus = projectData.status;
-            
             if (actionType === 'forward') {
-                // กด "ส่งต่อ" -> เลื่อนสถานะไปขั้นถัดไป
-                if (currentRole === 'survey') {
-                    if (confirm('ยืนยันการส่งต่อข้อมูลไปยังทีมออกแบบ?')) {
-                        projectData.status = 'design';
-                    } else { hideLoading(); return; }
-                } 
-                else if (currentRole === 'design') {
-                    if (confirm('ยืนยันการส่งต่อข้อมูลไปยังทีมประมูล?')) {
-                        projectData.status = 'bidding';
-                    } else { hideLoading(); return; }
+                if (currentRole === 'design') {
+                    if (confirm('ส่งต่อให้ทีมประมูล?')) projectData.status = 'bidding';
+                    else { hideLoading(); return; }
                 } 
                 else if (currentRole === 'bidding') {
-                    if (confirm('ยืนยันการส่งต่อข้อมูลไปยังทีมบริหารโครงการ (PM)?')) {
-                        projectData.status = 'pm';
-                    } else { hideLoading(); return; }
+                    if (confirm('ส่งต่อให้ PM?')) projectData.status = 'pm';
+                    else { hideLoading(); return; }
                 }
             } 
             else if (actionType === 'complete') {
-                // กด "เสร็จสิ้นโครงการ" (PM)
-                if (confirm('คุณกำลังจะปิดโครงการนี้ โครงการจะถูกล็อคและไม่สามารถแก้ไขได้อีก ยืนยันหรือไม่?')) {
-                    projectData.status = 'closed';
-                } else { hideLoading(); return; }
+                if (confirm('ปิดโครงการ?')) projectData.status = 'closed';
+                else { hideLoading(); return; }
             }
-            // กรณี actionType === 'save' -> ไม่ทำอะไรกับ status (รักษา status เดิมไว้)
         }
 
-        // --- Save to Supabase ---
         let result;
         if (isNewProject) {
             result = await supabaseClient.from(config.PROJECT_TABLE).insert([projectData]).select();
@@ -297,36 +236,11 @@ async function handleSave(actionType = 'save') {
             result = await supabaseClient.from(config.PROJECT_TABLE).update(projectData).eq('id', editingProject.id).select();
         }
 
-        if (result.error) {
-            showError(`การบันทึกข้อมูลล้มเหลว: ${result.error.message}`);
-        } else {
-            // แจ้งเตือนสำเร็จแบบสวยๆ (SweetAlert2)
-            if (actionType === 'forward') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'สำเร็จ!',
-                    text: 'บันทึกและส่งต่อข้อมูลเรียบร้อยแล้ว',
-                    confirmButtonColor: '#10b981',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } else {
-                // กรณีบันทึกธรรมดา ก็ให้ขึ้นเตือนนิดหน่อยว่าเสร็จแล้ว
-                 Swal.fire({
-                    icon: 'success',
-                    title: 'บันทึกแล้ว',
-                    text: 'ข้อมูลถูกบันทึกลงระบบแล้ว',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            }
-            
-            toggleForm(null, true);
-            await fetchProjects(); 
-        }
+        if (result.error) throw result.error;
+
+        Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false });
+        toggleForm(null, true);
+        await fetchProjects(); 
 
     } catch (err) {
         showError(err.message);
@@ -706,14 +620,23 @@ function renderAdminTable(projectsToDisplay) {
                 <canvas id="projectChart"></canvas>
             </div>
             <div class="summary-cards">
-                <div class="card-stat total"><h3>ทั้งหมด</h3><p>${projectsToDisplay.length}</p></div>
-                <div class="card-stat active"><h3>กำลังทำ</h3><p>${activeProjects.length}</p></div>
-                <div class="card-stat done"><h3>เสร็จแล้ว</h3><p>${closedProjects.length}</p></div>
+                <div class="card-stat total">
+                    <h3>ทั้งหมด</h3>
+                    <p>${projectsToDisplay.length}</p>
+                </div>
+                <div class="card-stat active">
+                    <h3>กำลังทำ</h3>
+                    <p>${activeProjects.length}</p>
+                </div>
+                <div class="card-stat done">
+                    <h3>เสร็จแล้ว</h3>
+                    <p>${closedProjects.length}</p>
+                </div>
             </div>
         </div>
     `;
 
-    // 2. ฟังก์ชันสร้างแถวตาราง
+    // 2. ฟังก์ชันย่อยสร้างแถวตาราง
     const createRow = (project) => {
         const escapedProject = JSON.stringify(project).replace(/"/g, '&quot;');
         const isClosed = project.status === 'closed';
@@ -721,12 +644,19 @@ function renderAdminTable(projectsToDisplay) {
         
         let view3DBtn = '';
         if (project.ifcModel) {
-            view3DBtn = `<button class="btn btn-simple-action" style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" onclick="event.stopPropagation(); window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"><i class="fas fa-cube"></i> 3D</button>`;
+            view3DBtn = `
+                <button class="btn btn-simple-action" 
+                    style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; margin-right:4px;" 
+                    onclick="event.stopPropagation(); window.open('ifc_viewer.html?modelUrl=${encodeURIComponent(project.ifcModel)}&projectName=${encodeURIComponent(project.projectName)}', '_blank')"
+                    title="เปิดโมเดล 3D">
+                    <i class="fas fa-cube"></i> 3D
+                </button>
+            `;
         }
         
         let actionButtons = '';
         
-        // 🟢 กรณีรออนุมัติ: โชว์ปุ่ม "เซ็นอนุมัติ"
+        // 🟢 กรณีรออนุมัติ (ภายใน)
         if (project.status === 'wait_for_approval') {
             actionButtons = `
                 <button class="btn btn-simple-action" style="background:#dcfce7; color:#166534; border-color:#bbf7d0;" 
@@ -737,9 +667,25 @@ function renderAdminTable(projectsToDisplay) {
                 <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
             `;
         } 
-        // 🔵 กรณีอนุมัติแล้ว (หรืออยู่ขั้นตอนอื่น): โชว์ปุ่ม "พิมพ์ใบสั่งจ้าง"
+        // 🟠 กรณีรออนุมัติ (ลูกค้า) -> มี 2 ปุ่มตามที่พี่เจขอครับ
+        else if (project.status === 'wait_for_customer') {
+            actionButtons = `
+                <button class="btn btn-simple-action" style="background:#fef9c3; color:#854d0e; border:1px solid #fde047; margin-right:4px;" 
+                    onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=print', '_blank')">
+                    <i class="fas fa-print"></i> พิมพ์
+                </button>
+                
+                <button class="btn btn-simple-action" style="background:#d97706; color:white; border:none; margin-right:4px;" 
+                    onclick="event.stopPropagation(); window.open('quotation.html?id=${project.id}&mode=customer', '_blank')">
+                    <i class="fas fa-pen-nib"></i> เซ็นหน้างาน
+                </button>
+
+                <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">แก้ไข</button>
+                <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
+            `;
+        }
+        // 🔵 กรณีอื่นๆ
         else if (!isClosed) {
-            // เช็คว่าถ้ามีลายเซ็นพี่ฝัดแล้ว ให้โชว์ปุ่ม Print
             let printBtn = '';
             if (project.approver_sign) {
                 printBtn = `
@@ -756,13 +702,16 @@ function renderAdminTable(projectsToDisplay) {
                 <button class="btn btn-simple-delete" onclick="event.stopPropagation(); window.App.deleteProject(${project.id})">ลบ</button>
             `;
         } else {
-            // ⚫ กรณีจบโครงการ
             actionButtons = `
                 ${view3DBtn} <button class="btn btn-simple-action" onclick="event.stopPropagation(); window.App.toggleForm(${escapedProject})">ดู</button>
             `;
         }
 
-        const workScopes = [project.workScopeDesign?'ออกแบบ':null, project.workScopeBidding?'ประมูล':null, project.workScopePM?'บริหารโครงการ':null].filter(Boolean).join(', ')||'-';
+        const workScopes = [
+            project.workScopeDesign ? 'ออกแบบ' : null,
+            project.workScopeBidding ? 'ประมูล' : null,
+            project.workScopePM ? 'บริหารโครงการ' : null
+        ].filter(Boolean).join(', ') || '-';
 
         return `
             <tr class="project-summary-row" onclick="window.App.toggleDetails(${project.id})">
@@ -778,12 +727,17 @@ function renderAdminTable(projectsToDisplay) {
                         <p><strong>ขอบเขตงาน:</strong> ${workScopes}</p>
                         <p><strong>ผู้จัดการ:</strong> ${getPM(project)}</p>
                         <p><strong>งบประมาณ:</strong> ${project.budget ? project.budget.toLocaleString('th-TH') : '-'}</p>
+                        
                         ${project.approver_sign ? 
-                          `<div style="margin-top:10px; border:1px dashed #ccc; padding:5px; border-radius:8px; width:fit-content;">
+                          `<div style="grid-column: 1 / -1; margin-top:10px; border:1px dashed #ccc; padding:5px; border-radius:8px; width:fit-content; background: #fff;">
                               <p style="font-size:0.8rem; margin:0; color:#666;">ผู้อนุมัติ (Reviewed By):</p>
                               <img src="${project.approver_sign}" style="height:40px; margin-top:5px;">
                            </div>` : ''
                         }
+                        
+                        <div style="grid-column: 1 / -1; margin-top:10px; padding-top:10px; border-top:1px dashed #eee; color:#666; font-size:0.9em;">
+                            <i class="fas fa-info-circle"></i> คลิกปุ่ม "แก้ไข" หรือ "ดู" เพื่อดูรายละเอียดไฟล์แนบทั้งหมด
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -1010,7 +964,8 @@ function openApprovalModal(projectId, projectName) {
     
     // Init Signature Pad
     const canvas = document.getElementById('signatureCanvas');
-    // ปรับขนาด Canvas ให้ชัดบนจอ Retina/มือถือ
+    if (!canvas) return; // กัน Error ถ้าไม่มี Canvas
+
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     canvas.width = canvas.offsetWidth * ratio;
     canvas.height = canvas.offsetHeight * ratio;
@@ -1018,7 +973,7 @@ function openApprovalModal(projectId, projectName) {
 
     if (!signaturePad) {
         signaturePad = new SignaturePad(canvas, {
-            backgroundColor: 'rgba(255, 255, 255, 0)', // พื้นหลังใส
+            backgroundColor: 'rgba(255, 255, 255, 0)',
             penColor: 'rgb(0, 0, 0)'
         });
     } else {
@@ -1026,50 +981,54 @@ function openApprovalModal(projectId, projectName) {
     }
 }
 
+// 2. ฟังก์ชันปิด Modal
 function closeApprovalModal() {
     document.getElementById('approvalModal').style.display = 'none';
     projectToApproveId = null;
 }
 
+// 3. ฟังก์ชันล้างลายเซ็น
 function clearSignature() {
     if (signaturePad) signaturePad.clear();
 }
 
+// 4. ฟังก์ชันยืนยันการอนุมัติ (บันทึกลง Database)
 async function confirmApproval() {
     if (!signaturePad || signaturePad.isEmpty()) {
         Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนกดยืนยัน', 'warning');
         return;
     }
 
-    if (!confirm('ยืนยันการอนุมัติ? ลายเซ็นจะถูกบันทึกและไม่สามารถแก้ไขได้')) return;
+    if (!confirm('ยืนยันการอนุมัติ?')) return;
 
     showLoading();
     try {
-        const signatureData = signaturePad.toDataURL(); // ได้เป็น Base64 string
+        const signatureData = signaturePad.toDataURL();
         
-        // อัปเดต Database
+        // --- 🟢 จุดที่ 1: แก้ Status ใน Database ---
         const { error } = await supabaseClient
             .from(config.PROJECT_TABLE)
             .update({
-                status: 'design', // ✅ เปลี่ยนสถานะเป็น Design เพื่อให้ทีมออกแบบเห็นงานต่อทันที
+                status: 'wait_for_customer',  // <--- ✅ แก้ตรงนี้! (ของเดิมอาจเป็น 'design')
                 approver_sign: signatureData,
-                approved_by: 'ผู้มีอำนาจลงนาม (System)', // หรือใส่ชื่อ User ที่ Login ถ้าทำระบบ Login แล้ว
+                approved_by: 'ผู้มีอำนาจลงนาม (System)',
                 approved_at: new Date().toISOString()
             })
             .eq('id', projectToApproveId);
 
         if (error) throw error;
-
         closeApprovalModal();
-        Swal.fire({
-            icon: 'success',
-            title: 'อนุมัติสำเร็จ!',
-            text: 'โครงการถูกส่งต่อไปยังทีมออกแบบแล้ว',
-            timer: 2000,
-            showConfirmButton: false
+        
+        // --- 🟢 จุดที่ 2: แก้ข้อความแจ้งเตือน ---
+        Swal.fire({ 
+            icon: 'success', 
+            title: 'ลงนามสำเร็จ!', // <--- ✅ แก้คำตรงนี้
+            text: 'สถานะเปลี่ยนเป็น "รออนุมัติ (ลูกค้า)"', // <--- ✅ แก้คำตรงนี้
+            timer: 1500, 
+            showConfirmButton: false 
         });
-        await fetchProjects(); // โหลดตารางใหม่
-
+        
+        await fetchProjects();
     } catch (err) {
         showError(err.message);
     } finally {
@@ -1094,9 +1053,10 @@ function renderDashboardChart() {
     const ctx = document.getElementById('projectChart');
     if (!ctx) return; 
 
-    // [FIX] ปรับ Logic นับสถานะใหม่ (เอารอสำรวจออก ใส่รออนุมัติแทน)
+    // ✅ ส่วนที่แก้: เปลี่ยนการนับจาก 'survey' เป็น 'wait_for_approval' และ 'wait_for_customer'
     const stats = {
-        wait: projects.filter(p => p.status === 'wait_for_approval').length, // <-- อันใหม่
+        wait: projects.filter(p => p.status === 'wait_for_approval').length,
+        customer: projects.filter(p => p.status === 'wait_for_customer').length, // เพิ่มสถานะรอลูกค้า
         design: projects.filter(p => p.status === 'design').length,
         bidding: projects.filter(p => p.status === 'bidding').length,
         pm: projects.filter(p => p.status === 'pm').length,
@@ -1104,14 +1064,15 @@ function renderDashboardChart() {
     };
 
     const data = {
-        // [FIX] เปลี่ยน Label เป็นภาษาไทยที่ถูกต้อง
-        labels: ['รออนุมัติ', 'ออกแบบ', 'ประมูล', 'บริหารโครงการ', 'เสร็จสิ้น'],
+        // ✅ เปลี่ยน Label ให้ตรงกับข้อมูล
+        labels: ['รออนุมัติ', 'รอลูกค้า', 'ออกแบบ', 'ประมูล', 'บริหาร', 'เสร็จสิ้น'],
         datasets: [{
-            data: [stats.wait, stats.design, stats.bidding, stats.pm, stats.closed],
+            data: [stats.wait, stats.customer, stats.design, stats.bidding, stats.pm, stats.closed],
             backgroundColor: [
-                '#fcd34d', // เหลือง (Wait)
+                '#fcd34d', // เหลือง (รออนุมัติ)
+                '#fb923c', // ส้ม (รอลูกค้า) - เพิ่มสีนี้
                 '#bae6fd', // ฟ้า (Design)
-                '#fed7aa', // ส้ม (Bidding)
+                '#fed7aa', // ส้มอ่อน (Bidding)
                 '#bbf7d0', // เขียว (PM)
                 '#cbd5e1'  // เทา (Closed)
             ],
@@ -1120,6 +1081,7 @@ function renderDashboardChart() {
         }]
     };
 
+    // ถ้ามีกราฟเดิมอยู่ ให้ทำลายก่อนสร้างใหม่ (ป้องกันกราฟซ้อนกัน)
     if (statusChart) statusChart.destroy();
 
     statusChart = new Chart(ctx, {
@@ -1140,8 +1102,8 @@ function renderDashboardChart() {
 // ⭐️ 5.4 Export functions (เพิ่มฟังก์ชัน Signature เข้าไป)
 window.App = {
     toggleForm,
-    saveProject: () => handleSave('save'),       // ปุ่มบันทึกธรรมดา
-    forwardProject: () => handleSave('forward'), // ปุ่มส่งต่อ
+    saveProject: () => handleSave('save'),
+    forwardProject: () => handleSave('forward'),
     completeProject: () => handleSave('complete'),
     deleteProject,
     changeRole,
@@ -1149,11 +1111,13 @@ window.App = {
     handleSearch,
     removeFile,
     clearSearch,
-    // เพิ่มใหม่สำหรับ Modal
+    
+    // ✅ เพิ่ม 4 อันนี้ครับ ปุ่มถึงจะกดติด
     openApprovalModal,
     closeApprovalModal,
     clearSignature,
     confirmApproval
+    
 };
 // =========================================
 // PARTICLE NETWORK ANIMATION (JS)
